@@ -331,9 +331,9 @@ p {
   position: absolute;
   left: 0;
   top: 0;
-  width: calc(max(var(--ring), 24px) * 2);
-  height: calc(max(var(--ring), 24px) * 2);
-  margin: calc(max(var(--ring), 24px) * -1) 0 0 calc(max(var(--ring), 24px) * -1);
+  width: calc(max(var(--ring), 22px) * 2);
+  height: calc(max(var(--ring), 22px) * 2);
+  margin: calc(max(var(--ring), 22px) * -1) 0 0 calc(max(var(--ring), 22px) * -1);
   border-radius: 50%;
   pointer-events: auto;
   transition: opacity 0.45s ease, visibility 0.45s;
@@ -374,6 +374,22 @@ p {
   padding: 4px 10px;
   border-radius: 999px;
   background: rgba(4, 6, 22, 0.38);
+}
+.world-label[data-side='top'] .world-name {
+  top: auto;
+  bottom: calc(100% + 6px);
+}
+.world-label[data-side='right'] .world-name,
+.world-label[data-side='left'] .world-name {
+  top: 50%;
+  transform: translateY(-50%);
+}
+.world-label[data-side='right'] .world-name {
+  left: calc(100% + 6px);
+}
+.world-label[data-side='left'] .world-name {
+  left: auto;
+  right: calc(100% + 6px);
 }
 .world-name small {
   font-size: 9px;
@@ -1093,9 +1109,15 @@ dialog[open] {
 @media (max-width: 700px), (max-aspect-ratio: 9/10) {
   .brand { gap: 8px; }
   .nav-link { font-size: 11px; }
+  /* Telefonda takımyıldız üst yarıda kalır; panel kısa tutulur ve mektup düğmesi
+     yalnız gezinmede görünür (aynı eylem iki kez gösterilmez). */
   .completion-panel { top: auto; bottom: calc(200px + var(--safe-bottom)); right: var(--gutter); }
-  .completion-panel h2 { font-size: 42px; }
-  .completion-panel p { font-size: 17px; margin-bottom: 18px; }
+  .completion-panel h2 { font-size: clamp(30px, 9vw, 38px); margin: 10px 0 8px; }
+  .completion-panel h2 br { display: none; }
+  .completion-panel p { font-size: 15px; line-height: 1.5; margin-bottom: 0; }
+  .completion-panel .primary { display: none; }
+  /* Kompakt yıldız etiketleri: dokunma hedefi halkanın kendisidir (en az 44 px). */
+  .world-name { font-size: 11px; padding: 3px 8px; top: calc(100% + 4px); gap: 5px; }
   .letter-dialog { padding: 54px 26px 28px; }
   .letter-dialog h2 { font-size: 35px; }
   .letter-paragraph { font-size: 18px; }
@@ -1103,6 +1125,8 @@ dialog[open] {
   .next-destination { margin-left: 0; }
 }
 @media (max-height: 520px) and (min-aspect-ratio: 9/10) {
+  .world-name { font-size: 10.5px; padding: 3px 8px; gap: 5px; }
+  .completion-panel .primary { display: none; }
   .completion-panel { top: 24%; }
   .completion-panel h2 { font-size: 36px; margin: 10px 0; }
   .completion-panel p { font-size: 15px; margin-bottom: 12px; }

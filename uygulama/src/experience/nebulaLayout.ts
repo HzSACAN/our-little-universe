@@ -29,15 +29,36 @@ interface Filament {
 }
 
 const filaments: Filament[] = [
+  // Derin bölüm: turkuaz, mor ve şafak yıldızlarının çevresi ve aralarındaki geçitler.
   {
-    points: [[600, 320, -2500], [410, 260, -2900], [180, 300, -3300]],
-    count: 20, size: [140, 300], spread: 90,
-    core: palette.fuchsia, edge: palette.purple, intensity: 0.18, stretch: [1.4, 2.6],
+    points: [[-150, 300, -1850], [80, 430, -1960], [300, 380, -2060]],
+    count: 12, size: [70, 160], spread: 50,
+    core: palette.fuchsia, edge: palette.purple, intensity: 0.16, stretch: [1.4, 2.6],
   },
   {
-    points: [[-250, 500, -3400], [-600, 470, -3800], [-850, 600, -4300]],
-    count: 22, size: [150, 340], spread: 90,
-    core: palette.gold, edge: palette.turquoise, intensity: 0.19, stretch: [1.3, 2.5],
+    points: [[-60, 520, -1950], [200, 730, -2250], [430, 640, -2520]],
+    count: 22, size: [120, 300], spread: 90,
+    core: palette.turquoise, edge: palette.blue, intensity: 0.19, stretch: [1.3, 2.8],
+  },
+  {
+    points: [[600, 780, -2600], [900, 1060, -2960], [1160, 900, -3220]],
+    count: 22, size: [130, 320], spread: 90,
+    core: palette.fuchsia, edge: palette.purple, intensity: 0.2, stretch: [1.4, 2.8],
+  },
+  {
+    points: [[1080, 640, -3120], [1340, 470, -3400]],
+    count: 10, size: [90, 200], spread: 60,
+    core: palette.green, edge: palette.turquoise, intensity: 0.15, stretch: [1.3, 2.4],
+  },
+  {
+    points: [[1250, 240, -3420], [1620, 500, -3860], [1940, 320, -4220]],
+    count: 24, size: [140, 340], spread: 100,
+    core: palette.gold, edge: palette.rose, intensity: 0.19, stretch: [1.3, 2.6],
+  },
+  {
+    points: [[1100, 760, -4400], [1800, 520, -4750], [2350, 180, -4500]],
+    count: 16, size: [360, 680], spread: 160,
+    core: palette.purple, edge: palette.navy, intensity: 0.18, stretch: [1.1, 2],
   },
 
   // Ön planda, açılışta kameranın iki yanında süzülen mavi-turkuaz tül.

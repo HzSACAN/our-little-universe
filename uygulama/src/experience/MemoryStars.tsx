@@ -15,10 +15,11 @@ import { fbm, simplexNoise3 } from './shaders/noise';
 import { COMPANION_ORBIT, COMPANION_RADIUS, stars } from './world';
 import type { SceneBridge } from './bridge';
 
-// İki anı yıldızı ışık yayan cisimler olarak çizilir. Altın yıldız taneli,
-// kaynayan bir yüzey ve uzun korona iplikleri taşır; ikili yıldızın ana
-// bileşeni akan bantlı buz mavisi bir yüzey, kenarında lavanta parıltı ve
-// etrafında dönen sıcak pembe-beyaz bir eş yıldıza sahiptir.
+// Altı anı yıldızı ışık yayan cisimler olarak çizilir ve her biri ayrı bir yüzey
+// karakteri taşır: altın ve pembe yıldız taneli kaynayan yüzey, ikili yıldız
+// akan bantlar ve eş yıldız, turkuaz yıldız manyetik plazma iplikleri, mor
+// yıldız dev konveksiyon hücreleri, şafak yıldızı ise altından pembeye dönen
+// iki tonlu bir yüzey.
 
 const surfaceVertex = /* glsl */ `
 varying vec3 vPos;
@@ -40,6 +41,8 @@ uniform vec3 uDeep;
 uniform vec3 uMid;
 uniform vec3 uHot;
 uniform vec3 uRim;
+uniform vec3 uTone;
+uniform float uToneMix;
 varying vec3 vPos;
 varying vec3 vNormal;
 varying vec3 vView;
@@ -59,6 +62,8 @@ void main(){
     float heat=clamp(.16+large*.58+grain*.2,0.,1.);
     col=mix(uDeep,uMid,smoothstep(.12,.58,heat));
     col=mix(col,uHot,smoothstep(.6,.95,heat)*.8);
+    // İsteğe bağlı iki ton: alt yarımküreye doğru ikinci renge döner (şafak).
+    col*=mix(vec3(1.),uTone,smoothstep(.35,-.85,p.y)*uToneMix);
     col*=.42+.58*pow(mu,.5);
     col+=uRim*pow(1.-mu,2.6)*.6;
   } else if(uMode==1){
@@ -76,6 +81,32 @@ void main(){
     col*=(.55+.4*pow(mu,.4))*.9;
     // Lavanta kenar parıltısı: altın yıldızdan farklı ışık davranışı.
     col+=uRim*pow(1.-mu,2.2)*.9;
+  } else if(uMode==3){
+    // Turkuaz: koyu zemin üzerinde parlak, kıvrılan manyetik plazma iplikleri; yavaş nefes.
+    float t=uTime*.05;
+    vec3 q=p*1.8+vec3(0.,t,0.);
+    float w=fbm(q);
+    float fil=1.-abs(snoise(p*3.2+w*1.8+vec3(t)));
+    fil=pow(fil,7.);
+    float base=fbm(p*2.6+w)*.5+.5;
+    float heat=clamp(.34+base*.36+fil*.4,0.,1.);
+    col=mix(uDeep,uMid,smoothstep(.15,.62,heat));
+    col=mix(col,uHot,smoothstep(.66,1.,heat)*.7);
+    col*=(.5+.5*pow(mu,.5))*(.93+.07*sin(uTime*.8));
+    col+=uRim*pow(1.-mu,2.4)*.55;
+  } else if(uMode==4){
+    // Mor: dev yıldız gibi büyük konveksiyon hücreleri, aralarında koyu yollar.
+    float t=uTime*.03;
+    vec3 q=p*3.1+vec3(t*.4,-t*.2,t*.3);
+    float w=fbm(q*.5);
+    float lanes=abs(snoise(q+w*1.4));
+    float cells=smoothstep(.0,.55,lanes);
+    float spots=fbm(p*1.5+vec3(4.,t*.6,0.))*.5+.5;
+    float heat=clamp(.3+cells*.3+spots*.4,0.,1.);
+    col=mix(uDeep,uMid,smoothstep(.2,.66,heat));
+    col=mix(col,uHot,smoothstep(.74,1.,heat)*.55);
+    col*=.42+.58*pow(mu,.6);
+    col+=uRim*pow(1.-mu,2.)*.75;
   } else {
     // Eş yıldız: küçük, sıcak, hızlı kaynayan yüzey.
     float n=fbm(p*5.+vec3(uTime*.2))*.5+.5;
@@ -129,7 +160,10 @@ void main(){
 `;
 
 interface StarLook {
-  mode: 0 | 1 | 2;
+  mode: 0 | 1 | 2 | 3 | 4;
+  /** Mod 0 için alt yarımküre tonu ve karışım oranı. */
+  tone?: string;
+  toneMix?: number;
   deep: string;
   mid: string;
   hot: string;
@@ -162,16 +196,17 @@ const looks: Record<StarId | 'companion', StarLook> = {
     corona: { color: '#f6a1cc', outer: '#9746b6', boost: 1.3, streamers: 0.65, reach: 0.65, size: 6 },
   },
   azure: {
-    mode: 2, deep: '#165d75', mid: '#6fdddb', hot: '#d8fff1', rim: '#80ffe7', rimBoost: 1.15,
-    corona: { color: '#8cf0df', outer: '#397cbf', boost: 1.15, streamers: 0.25, reach: 0.75, size: 6.5 },
+    mode: 3, deep: '#1a6b86', mid: '#34b9c4', hot: '#d2fff2', rim: '#7ff6e6', rimBoost: 1.1,
+    corona: { color: '#7fead8', outer: '#3a6fd0', boost: 1.15, streamers: 0.35, reach: 0.45, size: 5.5 },
   },
   violet: {
-    mode: 1, deep: '#482f9e', mid: '#a694ee', hot: '#e8daff', rim: '#de91ff', rimBoost: 1.45,
-    corona: { color: '#c6a5ff', outer: '#cf68b6', boost: 1.3, streamers: 0.65, reach: 0.5, size: 5.5 },
+    mode: 4, deep: '#4b2f9c', mid: '#9a7be4', hot: '#f1e4ff', rim: '#ff8ad6', rimBoost: 1.35,
+    corona: { color: '#c7a2ff', outer: '#d45fb0', boost: 1.3, streamers: 0.8, reach: 0.6, size: 6 },
   },
   dawn: {
-    mode: 0, deep: '#b65b32', mid: '#efbf80', hot: '#fff0ca', rim: '#ffe6ab', rimBoost: 1.3,
-    corona: { color: '#ffe0ad', outer: '#db8f9b', boost: 1.2, streamers: 0.9, reach: 0.7, size: 7 },
+    mode: 0, deep: '#b5552e', mid: '#f2b978', hot: '#fff0cf', rim: '#ffb1c4', rimBoost: 1.35,
+    tone: '#ff9cb8', toneMix: 0.55,
+    corona: { color: '#ffd6a8', outer: '#e07fa6', boost: 1.25, streamers: 0.95, reach: 0.75, size: 7.5 },
   },
   companion: {
     mode: 2,
@@ -184,6 +219,11 @@ const looks: Record<StarId | 'companion', StarLook> = {
   },
 };
 
+/** Uzak parıltı ve etiketler için her yıldızın korona rengi. */
+export const starGlowColors = Object.fromEntries(
+  starOrder.map((id) => [id, looks[id].corona.color]),
+) as Record<StarId, string>;
+
 function makeSurface(look: StarLook) {
   return new ShaderMaterial({
     uniforms: {
@@ -193,6 +233,8 @@ function makeSurface(look: StarLook) {
       uMid: { value: new Color(look.mid) },
       uHot: { value: new Color(look.hot) },
       uRim: { value: new Color(look.rim).multiplyScalar(look.rimBoost) },
+      uTone: { value: new Color(look.tone ?? '#ffffff') },
+      uToneMix: { value: look.toneMix ?? 0 },
     },
     vertexShader: surfaceVertex,
     fragmentShader: surfaceFragment,

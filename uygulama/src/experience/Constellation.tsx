@@ -15,7 +15,10 @@ export function Constellation({ visited, bridge }: { visited: StarId[]; bridge: 
 
 function Connection({ from, to, complete, bridge }: { from: StarId; to: StarId; complete: boolean; bridge: SceneBridge }) {
   const res = useMemo(() => {
-    const a = stars[from].position, b = stars[to].position;
+    // Çizgi yıldız merkezinden değil korona kenarından başlar; yüzeyin önünden geçmez.
+    const dir = stars[to].position.clone().sub(stars[from].position).normalize();
+    const a = stars[from].position.clone().addScaledVector(dir, stars[from].radius * 2.2);
+    const b = stars[to].position.clone().addScaledVector(dir, -stars[to].radius * 2.2);
     const midpoint = new Vector3().lerpVectors(a, b, 0.5);
     midpoint.y += a.distanceTo(b) * 0.025;
     const points = new CatmullRomCurve3([a, midpoint, b]).getPoints(80);

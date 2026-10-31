@@ -58,7 +58,7 @@ export const FlightStatus = forwardRef<HTMLElement, { label: string }>(function 
 export function CompletionPanel({ onLetter }: { onLetter: () => void }) {
   return <section className="completion-panel" aria-labelledby="completion-title">
     <div className="eyebrow">ALTI YILDIZ · BİR TAKIMYILDIZ</div>
-    <h2 id="completion-title">Bütün yollar,<br/><em>sana.</em></h2>
+    <h2 id="completion-title">Bütün yollar,{' '}<br/><em>sana.</em></h2>
     <p>Gökyüzümüz tamamlandı, Yağmur.<br/>Şimdi sana birkaç sözüm var.</p>
     <button className="primary" type="button" onClick={onLetter}>Sana bir mektup <span aria-hidden="true">↗</span></button>
   </section>;

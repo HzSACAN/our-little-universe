@@ -13,6 +13,7 @@ import { Nebula } from './Nebula';
 import { Starfield } from './Starfield';
 import { Constellation } from './Constellation';
 import { MemoryStars } from './MemoryStars';
+import { Beacons } from './Beacons';
 import { CameraRig } from './CameraRig';
 import { LabelProjector } from './LabelProjector';
 import type { Layout } from './world';
@@ -63,10 +64,11 @@ export function Scene(props: SceneProps) {
       )}
       {!disabled.has('memory') && <MemoryStars bridge={bridge} interactive={interactive} onSelect={onSelect} />}
       <Constellation visited={visited} bridge={bridge} />
+      {!disabled.has('memory') && <Beacons />}
       <CameraRig layout={layout} at={at} flight={flight} bridge={bridge} onArrive={onArrive} running={running} />
       <LabelProjector bridge={bridge} />
       <QualityGovernor tier={tier} running={running} onSlow={onSlow} />
-      <PerfProbe />
+      <PerfProbe tier={tier} />
       {!disabled.has('post') && (
       <EffectComposer multisampling={q.multisampling} frameBufferType={HalfFloatType} resolutionScale={1}>
         {/* Yalnızca HDR parlaklığı eşiği aşan yıldız çekirdekleri ve korona ışık yayar. */}
@@ -127,7 +129,9 @@ declare global {
 }
 
 /** Yalnızca `?olcum` adresinde açık; hediye arayüzünde sayaç göstermez. */
-function PerfProbe() {
+function PerfProbe({ tier }: { tier: QualityTier }) {
+  const tierRef = useRef(tier);
+  tierRef.current = tier;
   const gl = useThree((s) => s.gl);
   const frames = useRef<number[]>([]);
   const lastInfo = useRef({ calls: 0, triangles: 0 });
@@ -151,6 +155,7 @@ function PerfProbe() {
         textures: gl.info.memory.textures,
         programs: gl.info.programs?.length ?? 0,
         dpr: gl.getPixelRatio(),
+        tier: tierRef.current,
       };
       frames.current = [];
       return result;

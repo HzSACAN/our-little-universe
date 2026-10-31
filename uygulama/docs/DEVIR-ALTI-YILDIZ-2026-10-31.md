@@ -1,5 +1,7 @@
 # Altı yıldız aşaması — geliştirme devir noktası
 
+> **Durum (31 Ekim 2026, Claude):** Aşağıdaki “Tamamlanmayanlar” listesi bu kontrol noktasından devam edilerek ele alındı: altı yıldız gerçek WebGL2 sahnesinde incelendi ve görsel olarak geliştirildi, akışlar ve görünümler doğrulandı, performans ölçüldü. Güncel sonuçlar ve kalan sınırlar için [README](../README.md). Bu dosya devir anının kaydı olarak korunuyor.
+
 31 Ekim 2026. Bu kayıt, tamamlanmış görsel teslim değil, Claude'un devam etmesi için derlenebilir bir çalışma noktasıdır. Kullanıcının talimatıyla geliştirme durduruldu; mevcut değişiklikler daha sonra açıkça verilen commit/push talimatıyla kaydedildi.
 
 ## Başlangıç

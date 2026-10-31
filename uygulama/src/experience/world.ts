@@ -15,22 +15,15 @@ export interface StarBody {
 }
 
 export const stars: Record<StarId, StarBody> = {
-  gold: {
-    id: 'gold',
-    position: new Vector3(90, -30, -300),
-    radius: 14,
-    clearance: 36,
-  },
-  binary: {
-    id: 'binary',
-    position: new Vector3(-20, 190, -1150),
-    radius: 11,
-    clearance: 40,
-  },
-  rose: { id: 'rose', position: new Vector3(270, -340, -1650), radius: 13, clearance: 36 },
-  azure: { id: 'azure', position: new Vector3(-360, -300, -2200), radius: 15, clearance: 40 },
-  violet: { id: 'violet', position: new Vector3(440, 250, -2850), radius: 12, clearance: 36 },
-  dawn: { id: 'dawn', position: new Vector3(-560, 520, -3700), radius: 17, clearance: 46 },
+  // Konumlar, açılış kadrajında hikâye sırasıyla derinliğe doğru kıvrılan ve
+  // kendini kesmeyen bir halka oluşturacak biçimde seçildi (takımyıldız çizgileri
+  // birbirinin üzerinden geçmez). Telefon kadrajı aynı dünyaya ayrı bakar.
+  gold: { id: 'gold', position: new Vector3(72, -52, -300), radius: 14, clearance: 36 },
+  binary: { id: 'binary', position: new Vector3(-12, -249, -1150), radius: 11, clearance: 40 },
+  rose: { id: 'rose', position: new Vector3(-80, 116, -1650), radius: 13, clearance: 36 },
+  azure: { id: 'azure', position: new Vector3(173, 632, -2200), radius: 15, clearance: 40 },
+  violet: { id: 'violet', position: new Vector3(865, 895, -2850), radius: 13, clearance: 38 },
+  dawn: { id: 'dawn', position: new Vector3(1549, 370, -3700), radius: 17, clearance: 46 },
 };
 
 /** Eş yıldızın ana yıldıza göre yörünge yarıçapı (ana yarıçap biriminde). */
@@ -46,7 +39,7 @@ export const baseFov = (layout: Layout) => (layout === 'portrait' ? 60 : 50);
 
 export function homePose(layout: Layout): CameraPose {
   return layout === 'portrait'
-    ? { position: new Vector3(10, -20, 380), target: new Vector3(0, -250, -700) }
+    ? { position: new Vector3(-123, -239, 700), target: new Vector3(210, -377, -1039) }
     : { position: new Vector3(-60, 0, 300), target: new Vector3(-150, 20, -600) };
 }
 
