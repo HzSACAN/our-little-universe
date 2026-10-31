@@ -100,6 +100,8 @@ Başlangıç commit’i: `48acfbb5a382fedead7a72f3ff0b5d7e2e418184`.
 
 Kontroller: `pnpm typecheck`, **37/37 test**, `pnpm build`, `git diff --check` geçti. Yeni testler düşük FPS’te uçuş süresini, gizli sekmeden dönüşü, çok yavaş karelerde kalite düşüşünü ve WebGL2 gereksinimini kapsıyor.
 
-Bu inceleme Linux/Node 24 ortamında yapıldı. Kontrol tarayıcısında WebGL kapalı olduğundan erişilebilir yedek görünüm doğrulandı; **yeni WebGL shader/bloom çıktısı veya GPU FPS’i yeniden doğrulanmadı**. Bağlı yerel Chrome’da `localhost:4173` sunucusu kapalıydı. Önceki Windows/AMD ölçümleri üstte tarihsel kanıt olarak korunuyor; düzeltilmiş sürümün performansı sayılmamalı. Gerçek iPhone/Safari kabulü de bekliyor.
+İlk kod incelemesi Linux/Node 24 ortamında, WebGL bulunmayan kontrol tarayıcısıyla yapıldı. Ardından kullanıcı yerel sunucuyu açınca **`0179524` sürümünün gerçek WebGL2 yolu bağlı Chrome’da doğrulandı** (`index-BcYzalt3.js`, `Scene-DtXHGss8.js`). İki yıldız arasında normal yolculuk, geri dönüş, genel görünüm, listeden seçim, anı kartı, Escape ile odak geri dönüşü, sürükleme ve manuel hareket azaltma denendi. 360×740, 430×932 ve 844×390 viewport’ları incelendi; 360 px görünümde görünür düğmeler en az 44 px, 360/430 px görünümlerde yatay taşma yoktu. Uygulamadan gelen konsol hatası görülmedi; bilinen R3F/THREE.Clock uyarısı devam ediyor.
+
+Canlı incelemede yatay telefon metninin yıldızın parlak bölgesine uzanabildiği görüldü; yalnız bu yerleşimde anı paneli en fazla `42vw` ile sınırlandı. Bu son CSS ayarı yerel üretim derlemesine yeniden alınmalı. Sayısal FPS/GPU kaynak ölçümü bu canlı kontrolde tekrarlanmadı; önceki Windows/AMD değerleri tarihsel kayıttır. Viewport kontrolü gerçek iPhone/Safari veya Android cihaz kabulü değildir.
 
 Ayrıntılar ve sonraki aşama: [İnceleme notları](docs/INCELEME-2026-10-31.md).

@@ -1011,6 +1011,10 @@ dialog[open] {
 
 /* Yatay telefon: alçak ekran */
 @media (max-height: 520px) and (min-aspect-ratio: 9/10) {
+  /* Metin, sağdaki yıldızın parlak kenarına uzanmasın. */
+  .arrival-panel {
+    max-width: min(430px, 42vw);
+  }
   .header {
     padding-top: calc(10px + var(--safe-top));
   }
