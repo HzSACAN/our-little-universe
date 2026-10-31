@@ -34,7 +34,7 @@ export function Header({ started, locked, reducedMotion, onHome, onList, onToggl
         </span>
       </button>
       <div className="header-tools">
-        <button className="nav-link" type="button" onClick={onList}>
+        <button className="nav-link" type="button" disabled={locked} onClick={onList}>
           Anılarımız <span className="tiny-count">02</span>
         </button>
         <button

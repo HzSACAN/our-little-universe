@@ -15,7 +15,7 @@ pnpm build          # tip kontrolü + üretim derlemesi (dist/)
 pnpm preview        # üretim derlemesi: http://localhost:4173
 ```
 
-Telefonda yerel ağdan denemek için: `pnpm dev:host` (veya derlemeden sonra `pnpm preview:host`) ve telefonda `http://<bilgisayarın-yerel-IP'si>:5173`.
+Telefonda yerel ağdan denemek için `pnpm dev:host` ve `http://<bilgisayarın-yerel-IP'si>:5173` kullanın. Üretim derlemesi için `pnpm build` ardından `pnpm preview:host`; varsayılan önizleme portu `4173` olur. Komutun yazdırdığı gerçek adresi esas alın.
 
 Ölçüm: adrese `?olcum` eklenirse arayüzde hiçbir şey görünmez; tarayıcı konsolunda `window.__olcum()` son frame sürelerini (p50/p95/p99), çizim çağrısı ve GPU kaynak sayılarını verir. `?olcum&kapat=nebula,post` gibi katmanlar tek tek kapatılabilir.
 
@@ -38,14 +38,14 @@ React 19.3 · TypeScript 7 · Vite 8 · three 0.186 · @react-three/fiber 9.8 ·
 | `src/experience/MemoryStars.tsx` | Altın yıldız (granülasyon, korona iplikleri) ve ikili yıldız (akan bantlı buz mavisi yüzey, lavanta kenar, yörüngede pembe-beyaz eş yıldız ve sönen iz). |
 | `src/experience/LabelProjector.tsx` | Yıldız etiketlerini gerçek projeksiyonla konumlar; ekran dışı / öndeki yıldızın arkası gizlenir. |
 | `src/experience/Scene.tsx` | Tek Canvas, bloom + ACES ton eşleme + hafif vinyet, WebGL bağlam kaybı, kalite yöneticisi, ölçüm kancası. |
-| `src/experience/quality.ts` | Kalite kademeleri (DPR sınırı, parçacık sayısı, bulutsu çözünürlüğü/oktav, bloom çözünürlüğü). |
+| `src/experience/quality.ts` | Kalite kademeleri (DPR sınırı, parçacık sayısı, bulutsu çözünürlüğü/oktav, bloom geçiş sayısı). |
 | `src/experience/hooks.ts` | Ekran düzeni, hareket azaltma, sekme görünürlüğü, WebGL tespiti, sürükleme (pointercancel, çoklu dokunuş). |
 | `src/App.tsx`, `src/ui/*` | HTML arayüz: açılış, varış paneli, gezinme, yıldız etiketleri, anı ve liste dialogları, WebGL yoksa erişilebilir yedek. |
 | `src/styles.css` | Masaüstü ve telefon için ayrı yerleşimler; güvenli alan, `100dvh`, 44 px dokunma alanları. |
 | `scripts/*.mjs` | Headless Chrome ile gerçek GPU’da otomatik kontroller ve ekran görüntüleri (`pnpm dogrula:*`). |
 | `docs/ekranlar/` | Teslimdeki ekran görüntüleri. |
 
-## Yapılan kontroller (31 Ekim 2026)
+## İlk teslimde yapılan kontroller (31 Ekim 2026, önceki commit)
 
 Ortam: Windows 11, AMD Radeon entegre GPU (Renoir, ANGLE/Direct3D11), Chrome headless (gerçek GPU yolu). WebGL2 çizimi doğrulandı (`UNMASKED_RENDERER`: AMD Radeon Graphics, D3D11). Ekran görüntülerinin tamamı WebGL sahnesinden alındı; Canvas yedeği yoktur.
 
@@ -72,7 +72,7 @@ Ortam: Windows 11, AMD Radeon entegre GPU (Renoir, ANGLE/Direct3D11), Chrome hea
 - **Gerçek iPhone/Safari ve gerçek Android cihaz kontrolü yapılmadı.** Telefon görünümü yalnızca masaüstü Chrome’da emüle edildi; mobil GPU performansı ölçülmedi.
 - Uçuş videosu kaydedilmedi; yerine uçuş ortası ekran görüntüleri var.
 - Fotoğraflar, gerçek anı metinleri ve ilişkinin başlangıç yılı verilmedi; uydurulmadı.
-- three, ana pakete de dahil oluyor (dünya geometrisi uygulama kabuğunda kullanılıyor); WebGL’siz yedekte de indiriliyor.
+- İlk teslimde three ana paketteydi; aşağıdaki inceleme düzeltmesinde 3B sahne dinamik pakete ayrıldı.
 - R3F içinden gelen `THREE.Clock` kullanım dışı uyarısı konsolda görünür (kütüphane kaynaklı).
 - Bulutsu kenarları düşük çözünürlüklü ara hedef nedeniyle bilinçli olarak yumuşaktır; çok ince damar ayrıntısı bu kalite/performans dengesinin sonucudur.
 
@@ -84,3 +84,22 @@ Ortam: Windows 11, AMD Radeon entegre GPU (Renoir, ANGLE/Direct3D11), Chrome hea
 4. Varışta sürükleyerek bakının, “Anıyı aç” ile kartı açıp kapatın.
 5. Sağ üstteki dalga düğmesiyle hareketi azaltın.
 6. Renk yoğunluğu, yıldız yüzeyleri ve yerleşim için geri bildirim, altı yıldızlık sürüme geçmeden önce alınmalı.
+
+
+## Bağımsız inceleme düzeltmeleri (31 Ekim 2026)
+
+Başlangıç commit’i: `48acfbb5a382fedead7a72f3ff0b5d7e2e418184`.
+
+- Kalite yöneticisi artık aktif sahnede 250 ms’den uzun kareleri yok saymıyor. Sabit 120 kare beklemek yerine ısınma sonrası iki ardışık iki saniyelik pencereyi değerlendiriyor; böylece çok yavaş GPU’da da tepki verebiliyor.
+- Kamera yolculuğu süresi düşük FPS’te 50 ms ile kırpılmıyor. Görünmeyen sekmeden dönüşün ilk delta’sı ayrıca atlanıyor; aktif uçuş zamanı gerçek geçen süreyle ilerliyor.
+- Mipmap bloom için etkisiz `resolutionScale` yerine kaliteye bağlı `levels` (8/6/4) kullanılıyor. Bu bir çözünürlük ayarı olarak raporlanmıyor.
+- Ekran düzeni ve basit bakış sınırları Three.js’ten ayrıldı. Başlangıç JS’i 620,02 kB → 241,04 kB (gzip 177,20 → 75,79 kB). Bu **ilk paket** azalmasıdır; 3B sahne desteklenen cihazda ayrıca indirilir.
+- WebGL1-only cihazlar artık WebGL2 sahnesini başlatmaya çalışmadan erişilebilir yedeğe geçer.
+- Uçuş sırasında anı listesi düğmesi de kilitlenir; seçimin sessizce yok sayıldığı durum önlenir. Yıldız etiketleri aynı frame’in güncel kamera matrisini kullanır.
+- Geliştirme önizlemesi için yalnız `terminal.local` ek host olarak kabul edilir; tüm hostlara açık bir ayar yoktur.
+
+Kontroller: `pnpm typecheck`, **37/37 test**, `pnpm build`, `git diff --check` geçti. Yeni testler düşük FPS’te uçuş süresini, gizli sekmeden dönüşü, çok yavaş karelerde kalite düşüşünü ve WebGL2 gereksinimini kapsıyor.
+
+Bu inceleme Linux/Node 24 ortamında yapıldı. Kontrol tarayıcısında WebGL kapalı olduğundan erişilebilir yedek görünüm doğrulandı; **yeni WebGL shader/bloom çıktısı veya GPU FPS’i yeniden doğrulanmadı**. Bağlı yerel Chrome’da `localhost:4173` sunucusu kapalıydı. Önceki Windows/AMD ölçümleri üstte tarihsel kanıt olarak korunuyor; düzeltilmiş sürümün performansı sayılmamalı. Gerçek iPhone/Safari kabulü de bekliyor.
+
+Ayrıntılar ve sonraki aşama: [İnceleme notları](docs/INCELEME-2026-10-31.md).

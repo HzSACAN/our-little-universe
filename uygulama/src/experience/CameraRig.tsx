@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { CubicBezierCurve3, Euler, MathUtils, Matrix4, PerspectiveCamera, Quaternion, Vector3 } from 'three';
 import type { Destination, Flight } from './state';
 import type { SceneBridge } from './bridge';
+import { createFrameClock, frameSeconds, restartFrameClock } from './timing';
 import { baseFov, buildFlightCurve, flightDuration, poseFor, smootherstep, type CameraPose, type Layout } from './world';
 
 // Kameranın tek sahibi. Uçuş, sürükleyerek bakınma, fare paralaksı ve
@@ -15,6 +16,7 @@ interface CameraRigProps {
   flight: Flight | null;
   bridge: SceneBridge;
   onArrive: (flightId: number) => void;
+  running: boolean;
 }
 
 interface ActiveFlight {
@@ -43,8 +45,11 @@ function quaternionFor(position: Vector3, target: Vector3, out = new Quaternion(
   return out.setFromRotationMatrix(tmpMatrix);
 }
 
-export function CameraRig({ layout, at, flight, bridge, onArrive }: CameraRigProps) {
+export function CameraRig({ layout, at, flight, bridge, onArrive, running }: CameraRigProps) {
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
+
+  const frameClock = useRef(createFrameClock());
+  useLayoutEffect(() => restartFrameClock(frameClock.current), [running]);
 
   const basePosition = useRef(new Vector3());
   const baseQuat = useRef(new Quaternion());
@@ -144,9 +149,9 @@ export function CameraRig({ layout, at, flight, bridge, onArrive }: CameraRigPro
 
   useFrame((_, rawDelta) => {
     // Gizli sekmeden dönüşte büyük zaman farkı kamerayı sıçratmaz.
-    const dt = Math.min(rawDelta, 1 / 20);
+    const dt = frameSeconds(frameClock.current, rawDelta);
     const reduced = bridge.reducedMotion;
-    if (!reduced) clock.current += dt;
+    if (!reduced) clock.current += Math.min(dt, 0.05);
     const f = active.current;
     let travelTarget = 0;
     let fov = baseFov(layoutRef.current);
@@ -244,6 +249,7 @@ export function CameraRig({ layout, at, flight, bridge, onArrive }: CameraRigPro
       camera.fov = fov;
       camera.updateProjectionMatrix();
     }
+    camera.updateMatrixWorld();
   });
 
   return null;

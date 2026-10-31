@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Bloom, EffectComposer, ToneMapping, Vignette } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
@@ -6,6 +6,7 @@ import { HalfFloatType, NoToneMapping } from 'three';
 import type { StarId } from '../content/memories';
 import type { Flight, Destination } from './state';
 import type { SceneBridge } from './bridge';
+import { createFrameClock, createQualityWindow, frameSeconds, restartFrameClock, shouldLowerQuality } from './timing';
 import { qualitySettings, type QualityTier } from './quality';
 import { Sky } from './Sky';
 import { Nebula } from './Nebula';
@@ -59,9 +60,9 @@ export function Scene(props: SceneProps) {
         <Nebula share={q.nebulaShare} octaves={q.nebulaOctaves} resolution={q.nebulaResolution} bridge={bridge} />
       )}
       {!disabled.has('memory') && <MemoryStars bridge={bridge} interactive={interactive} onSelect={onSelect} />}
-      <CameraRig layout={layout} at={at} flight={flight} bridge={bridge} onArrive={onArrive} />
+      <CameraRig layout={layout} at={at} flight={flight} bridge={bridge} onArrive={onArrive} running={running} />
       <LabelProjector bridge={bridge} />
-      <QualityGovernor tier={tier} onSlow={onSlow} />
+      <QualityGovernor tier={tier} running={running} onSlow={onSlow} />
       <PerfProbe />
       {!disabled.has('post') && (
       <EffectComposer multisampling={q.multisampling} frameBufferType={HalfFloatType} resolutionScale={1}>
@@ -72,7 +73,7 @@ export function Scene(props: SceneProps) {
           luminanceSmoothing={0.25}
           intensity={0.75}
           radius={0.72}
-          resolutionScale={q.bloomScale}
+          levels={q.bloomLevels}
         />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         <Vignette offset={0.32} darkness={0.42} />
@@ -100,35 +101,18 @@ function ContextWatcher({ onLost }: { onLost: () => void }) {
 
 /**
  * Sürekli yavaş çizimde bir alt kalite kademesine iner. Önce piksel oranı,
- * bulutsu yoğunluğu ve bloom çözünürlüğü düşer; görsel dil korunur.
+ * bulutsu yoğunluğu ve bloom geçiş sayısı düşer; görsel dil korunur.
  */
-function QualityGovernor({ tier, onSlow }: { tier: QualityTier; onSlow: () => void }) {
-  const samples = useRef<number[]>([]);
-  const strikes = useRef(0);
-  const warmup = useRef(1.5);
-  useEffect(() => {
-    samples.current = [];
-    strikes.current = 0;
-    warmup.current = 1.5;
-  }, [tier]);
+function QualityGovernor({ tier, running, onSlow }: { tier: QualityTier; running: boolean; onSlow: () => void }) {
+  const window = useRef(createQualityWindow());
+  const clock = useRef(createFrameClock());
+  useLayoutEffect(() => {
+    window.current = createQualityWindow();
+    restartFrameClock(clock.current);
+  }, [tier, running]);
   useFrame((_, delta) => {
-    if (tier === 'low') return;
-    if (delta > 0.25) return; // sekme dönüşü vb.
-    if (warmup.current > 0) {
-      warmup.current -= delta;
-      return;
-    }
-    samples.current.push(delta);
-    if (samples.current.length < 120) return;
-    const sorted = [...samples.current].sort((a, b) => a - b);
-    const median = sorted[Math.floor(sorted.length / 2)];
-    samples.current = [];
-    // Medyan ~45 fps altındaysa bir kademe in (önce bulutsu çözünürlüğü ve örnekleme).
-    strikes.current = median > 1 / 45 ? strikes.current + 1 : 0;
-    if (strikes.current >= 2) {
-      strikes.current = 0;
-      onSlow();
-    }
+    if (!running || tier === 'low') return;
+    if (shouldLowerQuality(window.current, frameSeconds(clock.current, delta))) onSlow();
   });
   return null;
 }

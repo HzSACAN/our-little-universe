@@ -1,6 +1,5 @@
 import { useEffect, useState, type RefObject } from 'react';
-import { MathUtils } from 'three';
-import { layoutFor, type Layout } from './world';
+import { layoutFor, type Layout } from './layout';
 import { LOOK_LIMITS, type SceneBridge } from './bridge';
 
 export function useLayout(): Layout {
@@ -42,7 +41,8 @@ export function useDocumentVisible() {
 export function detectWebGL(): boolean {
   try {
     const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl');
+    // Three.js 0.186 ve bulutsu sampler3D yolu WebGL2 gerektirir.
+    const gl = canvas.getContext('webgl2');
     if (!gl) return false;
     gl.getExtension('WEBGL_lose_context')?.loseContext();
     return true;
@@ -50,6 +50,8 @@ export function detectWebGL(): boolean {
     return false;
   }
 }
+
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
 /**
  * Sürükleyerek sınırlı bakınma. Tek parmak/fare ile çalışır; ikinci parmak
@@ -82,8 +84,8 @@ export function useLookControls(target: RefObject<HTMLElement | null>, bridge: S
           return;
         }
         const scale = 1.25 / Math.max(window.innerWidth, 1);
-        bridge.look.yaw = MathUtils.clamp(drag.yaw + (e.clientX - drag.x) * scale, -LOOK_LIMITS.yaw, LOOK_LIMITS.yaw);
-        bridge.look.pitch = MathUtils.clamp(drag.pitch + (e.clientY - drag.y) * scale, -LOOK_LIMITS.pitch, LOOK_LIMITS.pitch);
+        bridge.look.yaw = clamp(drag.yaw + (e.clientX - drag.x) * scale, -LOOK_LIMITS.yaw, LOOK_LIMITS.yaw);
+        bridge.look.pitch = clamp(drag.pitch + (e.clientY - drag.y) * scale, -LOOK_LIMITS.pitch, LOOK_LIMITS.pitch);
       } else if (e.pointerType === 'mouse' && !drag) {
         bridge.look.hoverX = (e.clientX / window.innerWidth - 0.5) * 2;
         bridge.look.hoverY = (e.clientY / window.innerHeight - 0.5) * 2;

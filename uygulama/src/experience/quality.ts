@@ -10,7 +10,8 @@ export interface QualitySettings {
   nebulaShare: number;
   nebulaOctaves: number;
   skyOctaves: number;
-  bloomScale: number;
+  /** Mipmap bloom için gerçekten kullanılan bulanıklık kademesi sayısı. */
+  bloomLevels: number;
   multisampling: number;
   /** Bulutsu ara hedefinin çözünürlük oranı. */
   nebulaResolution: number;
@@ -26,7 +27,7 @@ const settings: Record<QualityTier, QualitySettings> = {
     nebulaShare: 1,
     nebulaOctaves: 5,
     skyOctaves: 5,
-    bloomScale: 0.6,
+    bloomLevels: 8,
     multisampling: 2,
     nebulaResolution: 0.6,
   },
@@ -39,7 +40,7 @@ const settings: Record<QualityTier, QualitySettings> = {
     nebulaShare: 0.8,
     nebulaOctaves: 4,
     skyOctaves: 5,
-    bloomScale: 0.5,
+    bloomLevels: 6,
     multisampling: 0,
     nebulaResolution: 0.5,
   },
@@ -52,7 +53,7 @@ const settings: Record<QualityTier, QualitySettings> = {
     nebulaShare: 0.62,
     nebulaOctaves: 3,
     skyOctaves: 5,
-    bloomScale: 0.4,
+    bloomLevels: 4,
     multisampling: 0,
     nebulaResolution: 0.34,
   },

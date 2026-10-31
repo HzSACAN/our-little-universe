@@ -1,10 +1,10 @@
 import { CubicBezierCurve3, Vector3 } from 'three';
 import type { StarId } from '../content/memories';
+import type { Layout } from './layout';
+export { layoutFor, type Layout } from './layout';
 
 // Dünya koordinatları sabittir. Ekran oranı değiştiğinde yıldızlar yer değiştirmez;
 // yalnızca kameranın duruşu ve varış kadrajı uyarlanır.
-
-export type Layout = 'wide' | 'portrait';
 
 export interface StarBody {
   id: StarId;
@@ -39,10 +39,6 @@ export interface CameraPose {
 }
 
 export const baseFov = (layout: Layout) => (layout === 'portrait' ? 60 : 50);
-
-export function layoutFor(width: number, height: number): Layout {
-  return width / Math.max(height, 1) < 0.9 ? 'portrait' : 'wide';
-}
 
 export function homePose(layout: Layout): CameraPose {
   return layout === 'portrait'
