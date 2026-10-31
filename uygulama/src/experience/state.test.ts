@@ -56,3 +56,42 @@ describe('deneyim durumu', () => {
     expect(s.detailOpen).toBe(false);
   });
 });
+
+describe('mektup ve alternatif okuma akışı', () => {
+  const order = ['violet', 'gold', 'dawn', 'rose', 'binary', 'azure'] as const;
+  it('ilk beş keşifte mektubu kilitler, altıncı varışta açılabilir kılar', () => {
+    let state = initialState;
+    for (let i = 0; i < order.length; i++) {
+      state = experienceReducer(state, { type: 'travel', to: order[i] });
+      expect(experienceReducer(state, { type: 'openLetter' }).letterOpen).toBe(false);
+      state = experienceReducer(state, { type: 'arrive', flightId: state.flight!.id });
+      expect(state.letterOpen).toBe(false); // Kendiliğinden açılıp sahneyi kesmez.
+      expect(experienceReducer(state, { type: 'openLetter' }).letterOpen).toBe(i === 5);
+    }
+    const opened = experienceReducer(state, { type: 'openLetter' });
+    const closed = experienceReducer(opened, { type: 'closeLetter' });
+    expect(closed.visited).toEqual([...order]);
+    expect(closed.letterOpen).toBe(false);
+  });
+  it('aynı anıyı tekrar okumak kilidi kaldırmaz', () => {
+    let state = initialState;
+    for (let i = 0; i < 6; i++) state = experienceReducer(state, { type: 'discoverFallback', id: 'gold' });
+    expect(state.visited).toEqual(['gold']);
+    expect(experienceReducer(state, { type: 'openLetter' })).toBe(state);
+  });
+  it('WebGL kaybında ziyaretleri korur, eski uçuşu kapatır ve mektuba erişim sağlar', () => {
+    let state = experienceReducer(initialState, { type: 'travel', to: 'gold' });
+    const staleId = state.flight!.id;
+    for (const id of order) state = experienceReducer(state, { type: 'discoverFallback', id });
+    expect(state.flight).toBeNull();
+    expect(experienceReducer(state, { type: 'arrive', flightId: staleId })).toBe(state);
+    expect(experienceReducer(state, { type: 'openLetter' }).letterOpen).toBe(true);
+  });
+  it('anıdan mektuba geçerken tek dialog bırakır; yeni uçuş mektubu kapatır', () => {
+    let state = { ...initialState, phase: 'arrived' as const, current: 'gold' as const, visited: [...order], detailOpen: true };
+    const opened = experienceReducer(state, { type: 'openLetter' });
+    expect(opened.detailOpen).toBe(false);
+    expect(opened.letterOpen).toBe(true);
+    expect(experienceReducer(opened, { type: 'travel', to: 'home' }).letterOpen).toBe(false);
+  });
+});

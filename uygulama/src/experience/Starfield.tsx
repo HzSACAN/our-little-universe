@@ -143,9 +143,9 @@ export function Starfield({ far, mid, dust, bridge }: StarfieldProps) {
       (rng, out) => {
         const theta = rng() * Math.PI * 2;
         const phi = Math.acos(2 * rng() - 1);
-        const r = range(rng, 2600, 5200);
+        const r = range(rng, 2600, 6500);
         out.setFromSphericalCoords(r, phi, theta);
-        out.z -= 900;
+        out.z -= 1400;
       },
       0.03,
     );
@@ -153,7 +153,7 @@ export function Starfield({ far, mid, dust, bridge }: StarfieldProps) {
       mid,
       23,
       (rng, out) => {
-        out.set(range(rng, -1500, 1500), gaussian(rng) * 700, range(rng, 650, -2900));
+        out.set(range(rng, -1500, 1500), gaussian(rng) * 700, range(rng, 650, -4600));
       },
       0.06,
     );

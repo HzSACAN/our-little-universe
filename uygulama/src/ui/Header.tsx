@@ -1,5 +1,9 @@
+import { memories } from '../content/memories';
 interface HeaderProps {
   started: boolean;
+  complete: boolean;
+  remaining: number;
+  onLetter: () => void;
   locked: boolean;
   reducedMotion: boolean;
   onHome: () => void;
@@ -7,7 +11,7 @@ interface HeaderProps {
   onToggleMotion: () => void;
 }
 
-export function Header({ started, locked, reducedMotion, onHome, onList, onToggleMotion }: HeaderProps) {
+export function Header({ started, complete, remaining, onLetter, locked, reducedMotion, onHome, onList, onToggleMotion }: HeaderProps) {
   return (
     <header className="header">
       <button
@@ -35,7 +39,14 @@ export function Header({ started, locked, reducedMotion, onHome, onList, onToggl
       </button>
       <div className="header-tools">
         <button className="nav-link" type="button" disabled={locked} onClick={onList}>
-          Anılarımız <span className="tiny-count">02</span>
+          Anılarımız <span className="tiny-count">0{memories.length}</span>
+        </button>
+        <button className="icon-button letter-trigger" type="button" disabled={locked || !complete} onClick={onLetter}
+          aria-label={complete ? 'Yağmur’a mektubu aç' : `Mektup kilitli, ${remaining} yıldız daha keşfet`}
+          title={complete ? 'Sana bir mektup' : `${remaining} yıldız sonra açılacak`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/>
+          </svg>
         </button>
         <button
           className="icon-button"

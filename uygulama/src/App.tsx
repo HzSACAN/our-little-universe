@@ -1,13 +1,13 @@
 import { Component, lazy, Suspense, useCallback, useEffect, useReducer, useRef, useState, type ReactNode } from 'react';
-import { memoryById, starOrder } from './content/memories';
+import { isComplete, memories, memoryById, nextUnvisited } from './content/memories';
 import { experienceReducer, initialState, type Destination } from './experience/state';
 import { createBridge } from './experience/bridge';
 import { detectWebGL, useDocumentVisible, useLayout, useLookControls, useReducedMotion } from './experience/hooks';
 import { initialTier, lowerTier, type QualityTier } from './experience/quality';
 import { Header } from './ui/Header';
 import { StarLabels } from './ui/StarLabels';
-import { ArrivalPanel, ExploreCaption, FlightStatus, Footer, Intro, Navigation } from './ui/Panels';
-import { ListDialog, MemoryDialog } from './ui/Dialogs';
+import { ArrivalPanel, CompletionPanel, ExploreCaption, FlightStatus, Footer, Intro, Navigation } from './ui/Panels';
+import { LetterDialog, ListDialog, MemoryDialog } from './ui/Dialogs';
 import { Fallback } from './ui/Fallback';
 
 const Scene = lazy(() => import('./experience/Scene').then((m) => ({ default: m.Scene })));
@@ -35,6 +35,9 @@ export default function App() {
 
   const travelling = state.phase === 'travelling';
   const started = state.phase !== 'intro';
+  const complete = isComplete(state.visited);
+  const openLetter = () => { setListOpen(false); dispatch({ type: 'openLetter' }); };
+  const letterDialog = <LetterDialog open={complete && state.letterOpen} onClose={() => dispatch({ type: 'closeLetter' })} />;
 
   bridge.reducedMotion = reducedMotion;
   bridge.current = travelling ? null : state.current;
@@ -84,6 +87,9 @@ export default function App() {
         <div className="fallback-sky" aria-hidden="true" />
         <Fallback
           message={fallbackMessages[status]}
+          visited={state.visited}
+          onDiscover={(id) => dispatch({ type: 'discoverFallback', id })}
+          onLetter={openLetter}
           onRetry={
             status === 'lost' || status === 'error'
               ? () => {
@@ -95,6 +101,7 @@ export default function App() {
               : undefined
           }
         />
+        {letterDialog}
       </div>
     );
   }
@@ -109,10 +116,11 @@ export default function App() {
               layout={layout}
               at={state.current ?? 'home'}
               flight={state.flight}
+              visited={state.visited}
               bridge={bridge}
               tier={tier}
               running={visible}
-              interactive={!travelling}
+              interactive={!travelling && !listOpen && !state.detailOpen && !state.letterOpen}
               onArrive={onArrive}
               onSelect={travel}
               onContextLost={onContextLost}
@@ -125,6 +133,9 @@ export default function App() {
 
       <Header
         started={started}
+        complete={complete}
+        remaining={memories.length - state.visited.length}
+        onLetter={openLetter}
         locked={travelling}
         reducedMotion={reducedMotion}
         onHome={() => travel('home')}
@@ -134,10 +145,10 @@ export default function App() {
 
       <main className="experience">
         {state.phase === 'intro' && <Intro onBegin={() => travel('gold')} />}
-        {state.phase === 'overview' && <ExploreCaption />}
+        {state.phase === 'overview' && (complete ? <CompletionPanel onLetter={openLetter} /> : <ExploreCaption />)}
         {travelling && <FlightStatus label={destinationLabel} ref={(el) => void (bridge.progressBar = el)} />}
         {state.phase === 'arrived' && current && (
-          <ArrivalPanel memory={current} ref={arrivalTitle} onOpen={() => dispatch({ type: 'openDetail' })} />
+          <ArrivalPanel memory={current} ref={arrivalTitle} complete={complete} onLetter={openLetter} onOpen={() => dispatch({ type: 'openDetail' })} />
         )}
         <StarLabels bridge={bridge} visited={state.visited} onSelect={travel} />
         {started && (
@@ -148,6 +159,7 @@ export default function App() {
             atHome={state.phase === 'overview'}
             onTravel={travel}
             onHome={() => travel('home')}
+            onLetter={openLetter}
           />
         )}
       </main>
@@ -158,12 +170,14 @@ export default function App() {
         memory={current}
         open={state.detailOpen}
         onClose={() => dispatch({ type: 'closeDetail' })}
+        nextLabel={complete ? 'Mektubunu aç' : 'Sıradaki yıldıza git'}
         onNext={() => {
           dispatch({ type: 'closeDetail' });
-          const i = starOrder.indexOf(state.current ?? starOrder[starOrder.length - 1]);
-          travel(starOrder[(i + 1) % starOrder.length]);
+          if (complete) openLetter();
+          else travel(nextUnvisited(state.current, state.visited));
         }}
       />
+      {letterDialog}
       <ListDialog
         open={listOpen}
         visited={state.visited}

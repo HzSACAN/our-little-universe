@@ -1,4 +1,4 @@
-import type { StarId } from '../content/memories';
+import { isComplete, type StarId } from '../content/memories';
 
 export type Phase = 'intro' | 'travelling' | 'arrived' | 'overview';
 export type Destination = StarId | 'home';
@@ -15,6 +15,7 @@ export interface ExperienceState {
   flight: Flight | null;
   visited: StarId[];
   detailOpen: boolean;
+  letterOpen: boolean;
   nextFlightId: number;
 }
 
@@ -22,7 +23,10 @@ export type ExperienceAction =
   | { type: 'travel'; to: Destination }
   | { type: 'arrive'; flightId: number }
   | { type: 'openDetail' }
-  | { type: 'closeDetail' };
+  | { type: 'closeDetail' }
+  | { type: 'openLetter' }
+  | { type: 'closeLetter' }
+  | { type: 'discoverFallback'; id: StarId };
 
 export const initialState: ExperienceState = {
   phase: 'intro',
@@ -30,6 +34,7 @@ export const initialState: ExperienceState = {
   flight: null,
   visited: [],
   detailOpen: false,
+  letterOpen: false,
   nextFlightId: 1,
 };
 
@@ -45,6 +50,7 @@ export function experienceReducer(state: ExperienceState, action: ExperienceActi
         ...state,
         phase: 'travelling',
         detailOpen: false,
+        letterOpen: false,
         flight: { id: state.nextFlightId, to: action.to },
         nextFlightId: state.nextFlightId + 1,
       };
@@ -65,5 +71,15 @@ export function experienceReducer(state: ExperienceState, action: ExperienceActi
       return { ...state, detailOpen: true };
     case 'closeDetail':
       return state.detailOpen ? { ...state, detailOpen: false } : state;
+    case 'openLetter':
+      if (state.flight || !isComplete(state.visited)) return state;
+      return { ...state, detailOpen: false, letterOpen: true };
+    case 'closeLetter':
+      return state.letterOpen ? { ...state, letterOpen: false } : state;
+    case 'discoverFallback': {
+      // WebGL olmadığında anıyı okuyarak aynı hikâye tamamlanabilir.
+      const visited = state.visited.includes(action.id) ? state.visited : [...state.visited, action.id];
+      return { ...state, phase: 'arrived', current: action.id, flight: null, detailOpen: false, letterOpen: false, visited };
+    }
   }
 }

@@ -10,7 +10,7 @@ import {
   ShaderMaterial,
   SphereGeometry,
 } from 'three';
-import type { StarId } from '../content/memories';
+import { starOrder, type StarId } from '../content/memories';
 import { fbm, simplexNoise3 } from './shaders/noise';
 import { COMPANION_ORBIT, COMPANION_RADIUS, stars } from './world';
 import type { SceneBridge } from './bridge';
@@ -138,7 +138,7 @@ interface StarLook {
   corona: { color: string; outer: string; boost: number; streamers: number; reach: number; size: number };
 }
 
-const looks: Record<'gold' | 'binary' | 'companion', StarLook> = {
+const looks: Record<StarId | 'companion', StarLook> = {
   gold: {
     mode: 0,
     deep: '#a33d12',
@@ -156,6 +156,22 @@ const looks: Record<'gold' | 'binary' | 'companion', StarLook> = {
     rim: '#c9a6ff',
     rimBoost: 1.6,
     corona: { color: '#9fc2ff', outer: '#a77bff', boost: 1.3, streamers: 0.45, reach: 0.38, size: 5 },
+  },
+  rose: {
+    mode: 0, deep: '#8b1f59', mid: '#e779b4', hot: '#ffe1ef', rim: '#ffa0c8', rimBoost: 1.3,
+    corona: { color: '#f6a1cc', outer: '#9746b6', boost: 1.3, streamers: 0.65, reach: 0.65, size: 6 },
+  },
+  azure: {
+    mode: 2, deep: '#165d75', mid: '#6fdddb', hot: '#d8fff1', rim: '#80ffe7', rimBoost: 1.15,
+    corona: { color: '#8cf0df', outer: '#397cbf', boost: 1.15, streamers: 0.25, reach: 0.75, size: 6.5 },
+  },
+  violet: {
+    mode: 1, deep: '#482f9e', mid: '#a694ee', hot: '#e8daff', rim: '#de91ff', rimBoost: 1.45,
+    corona: { color: '#c6a5ff', outer: '#cf68b6', boost: 1.3, streamers: 0.65, reach: 0.5, size: 5.5 },
+  },
+  dawn: {
+    mode: 0, deep: '#b65b32', mid: '#efbf80', hot: '#fff0ca', rim: '#ffe6ab', rimBoost: 1.3,
+    corona: { color: '#ffe0ad', outer: '#db8f9b', boost: 1.2, streamers: 0.9, reach: 0.7, size: 7 },
   },
   companion: {
     mode: 2,
@@ -215,15 +231,11 @@ export function MemoryStars({ bridge, interactive, onSelect }: MemoryStarsProps)
     const sphere = new SphereGeometry(1, 96, 64);
     const smallSphere = new SphereGeometry(1, 48, 32);
     const quad = new PlaneGeometry(2, 2);
-    const goldSurface = makeSurface(looks.gold);
-    const binarySurface = makeSurface(looks.binary);
+    const materials = Object.fromEntries(starOrder.map((id) => [id, {
+      surface: makeSurface(looks[id]), corona: makeCorona(looks[id], stars[id].radius),
+    }])) as Record<StarId, { surface: ShaderMaterial; corona: ShaderMaterial }>;
     const companionSurface = makeSurface(looks.companion);
-    // Korona billboard boyutu dünya biriminde verilir.
-    const goldCorona = makeCorona(looks.gold, stars.gold.radius);
-    const binaryCorona = makeCorona(looks.binary, stars.binary.radius);
     const companionCorona = makeCorona(looks.companion, stars.binary.radius * COMPANION_RADIUS);
-
-    // Eş yıldızın arkasında sönen yörünge izi.
     const segments = 160;
     const orbitPos = new Float32Array((segments + 1) * 3);
     const orbitAngle = new Float32Array(segments + 1);
@@ -237,101 +249,61 @@ export function MemoryStars({ bridge, interactive, onSelect }: MemoryStarsProps)
     orbitGeo.setAttribute('aAngle', new BufferAttribute(orbitAngle, 1));
     const orbitMat = new ShaderMaterial({
       uniforms: { uHead: { value: 0 }, uColor: { value: new Color('#d8b8ff').multiplyScalar(0.9) } },
-      vertexShader: /* glsl */ `
-        attribute float aAngle;
-        uniform float uHead;
-        varying float vTrail;
-        void main(){
-          float behind=mod(uHead-aAngle+6.2831853,6.2831853);
-          vTrail=exp(-behind*1.6)*.9;
-          gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);
-        }`,
-      fragmentShader: /* glsl */ `
-        uniform vec3 uColor;
-        varying float vTrail;
-        void main(){ gl_FragColor=vec4(uColor*vTrail,1.); }`,
-      transparent: true,
-      depthWrite: false,
-      blending: AdditiveBlending,
+      vertexShader: `attribute float aAngle; uniform float uHead; varying float vTrail;
+        void main(){float behind=mod(uHead-aAngle+6.2831853,6.2831853);vTrail=exp(-behind*1.6)*.9;
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+      fragmentShader: `uniform vec3 uColor; varying float vTrail;
+        void main(){gl_FragColor=vec4(uColor*vTrail,1.);}`,
+      transparent: true, depthWrite: false, blending: AdditiveBlending,
     });
-    return {
-      sphere,
-      smallSphere,
-      quad,
-      goldSurface,
-      binarySurface,
-      companionSurface,
-      goldCorona,
-      binaryCorona,
-      companionCorona,
-      orbitGeo,
-      orbitMat,
-    };
+    return { sphere, smallSphere, quad, materials, companionSurface, companionCorona, orbitGeo, orbitMat };
   }, []);
 
-  useEffect(
-    () => () => {
-      Object.values(res).forEach((r) => r.dispose());
-    },
-    [res],
-  );
+  useEffect(() => () => {
+    [res.sphere, res.smallSphere, res.quad, res.companionSurface, res.companionCorona, res.orbitGeo, res.orbitMat].forEach((r) => r.dispose());
+    Object.values(res.materials).forEach(({ surface, corona }) => { surface.dispose(); corona.dispose(); });
+  }, [res]);
 
-  const goldGroup = useRef<Group>(null);
+  const bodies = useRef<Partial<Record<StarId, Group | null>>>({});
   const companion = useRef<Group>(null);
   const time = useRef(0);
-
   useFrame((_, delta) => {
     if (!bridge.reducedMotion) time.current += Math.min(delta, 0.05);
     const t = time.current;
-    for (const m of [res.goldSurface, res.binarySurface, res.companionSurface, res.goldCorona, res.binaryCorona, res.companionCorona]) {
-      m.uniforms.uTime.value = t;
-    }
-    if (goldGroup.current) goldGroup.current.rotation.y = t * 0.02;
-    // Eş yıldız eğik bir düzlemde ana yıldızın etrafında döner; yaklaşınca derinlik okunur.
+    starOrder.forEach((id, i) => {
+      const localTime = t * (id === 'azure' ? 0.4 : 1) + i * 17;
+      res.materials[id].surface.uniforms.uTime.value = localTime;
+      res.materials[id].corona.uniforms.uTime.value = localTime;
+      const body = bodies.current[id];
+      if (body) body.rotation.y = t * (0.012 + i * 0.003);
+    });
+    res.companionSurface.uniforms.uTime.value = t;
+    res.companionCorona.uniforms.uTime.value = t;
     const angle = t * 0.22 + 2.2;
-    if (companion.current) {
-      companion.current.position.set(Math.cos(angle) * COMPANION_ORBIT, 0, Math.sin(angle) * COMPANION_ORBIT);
-    }
+    companion.current?.position.set(Math.cos(angle) * COMPANION_ORBIT, 0, Math.sin(angle) * COMPANION_ORBIT);
     res.orbitMat.uniforms.uHead.value = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
   });
 
   const select = (id: StarId) => (e: ThreeEvent<MouseEvent>) => {
-    // Sürükleyip bırakmak uçuş başlatmaz.
     if (!interactive || e.delta > 8) return;
-    e.stopPropagation();
-    onSelect(id);
+    e.stopPropagation(); onSelect(id);
   };
 
-  const gold = stars.gold;
-  const binary = stars.binary;
-
-  return (
-    <>
-      <group position={gold.position} scale={gold.radius}>
-        <group ref={goldGroup}>
-          <mesh geometry={res.sphere} material={res.goldSurface} onClick={select('gold')} />
-        </group>
-        <mesh geometry={res.quad} material={res.goldCorona} renderOrder={5} raycast={noRaycast} />
+  return <group dispose={null}>
+    {starOrder.map((id) => <group key={id} position={stars[id].position} scale={stars[id].radius}>
+      <group ref={(el) => { bodies.current[id] = el; }}>
+        <mesh geometry={res.sphere} material={res.materials[id].surface} onClick={select(id)} />
       </group>
-
-      <group position={binary.position} scale={binary.radius}>
-        <group rotation={[0.95, 0.15, -0.28]}>
-          <mesh geometry={res.sphere} material={res.binarySurface} onClick={select('binary')} />
-          <mesh geometry={res.quad} material={res.binaryCorona} renderOrder={5} raycast={noRaycast} />
-          <lineLoop geometry={res.orbitGeo} material={res.orbitMat} renderOrder={4} raycast={noRaycast} />
-          <group ref={companion}>
-            <group scale={COMPANION_RADIUS}>
-              <mesh geometry={res.smallSphere} material={res.companionSurface} onClick={select('binary')} />
-              <mesh geometry={res.quad} material={res.companionCorona} renderOrder={5} raycast={noRaycast} />
-            </group>
-          </group>
-        </group>
-      </group>
-    </>
-  );
+      <mesh geometry={res.quad} material={res.materials[id].corona} renderOrder={5} raycast={noRaycast} />
+      {id === 'binary' && <group rotation={[0.95, 0.15, -0.28]}>
+        <lineLoop geometry={res.orbitGeo} material={res.orbitMat} renderOrder={4} raycast={noRaycast} />
+        <group ref={companion}><group scale={COMPANION_RADIUS}>
+          <mesh geometry={res.smallSphere} material={res.companionSurface} onClick={select(id)} />
+          <mesh geometry={res.quad} material={res.companionCorona} renderOrder={5} raycast={noRaycast} />
+        </group></group>
+      </group>}
+    </group>)}
+  </group>;
 }
 
-function noRaycast() {
-  return null;
-}
-
+function noRaycast() { return null; }

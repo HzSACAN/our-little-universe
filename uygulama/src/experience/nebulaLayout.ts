@@ -29,6 +29,17 @@ interface Filament {
 }
 
 const filaments: Filament[] = [
+  {
+    points: [[600, 320, -2500], [410, 260, -2900], [180, 300, -3300]],
+    count: 20, size: [140, 300], spread: 90,
+    core: palette.fuchsia, edge: palette.purple, intensity: 0.18, stretch: [1.4, 2.6],
+  },
+  {
+    points: [[-250, 500, -3400], [-600, 470, -3800], [-850, 600, -4300]],
+    count: 22, size: [150, 340], spread: 90,
+    core: palette.gold, edge: palette.turquoise, intensity: 0.19, stretch: [1.3, 2.5],
+  },
+
   // Ön planda, açılışta kameranın iki yanında süzülen mavi-turkuaz tül.
   {
     points: [[-330, -110, 140], [-210, -60, 40], [-160, -150, -80]],

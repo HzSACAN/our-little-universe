@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from 'three';
 import { buildFlightCurve, closestApproach, flightDuration, poseFor, stars, type Layout } from './world';
+import { starOrder } from '../content/memories';
 import type { Destination } from './state';
 
-const places: Destination[] = ['home', 'gold', 'binary'];
+const places: Destination[] = ['home', ...starOrder];
 const layouts: Layout[] = ['wide', 'portrait'];
 
 describe('uçuş geometrisi', () => {
@@ -44,7 +45,7 @@ describe('uçuş geometrisi', () => {
 
   it('varış noktası yıldızın dışında', () => {
     for (const layout of layouts) {
-      for (const id of ['gold', 'binary'] as const) {
+      for (const id of starOrder) {
         const d = poseFor(id, layout).position.distanceTo(stars[id].position);
         expect(d).toBeGreaterThan(stars[id].clearance);
       }

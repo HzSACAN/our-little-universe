@@ -27,6 +27,10 @@ export const stars: Record<StarId, StarBody> = {
     radius: 11,
     clearance: 40,
   },
+  rose: { id: 'rose', position: new Vector3(270, -340, -1650), radius: 13, clearance: 36 },
+  azure: { id: 'azure', position: new Vector3(-360, -300, -2200), radius: 15, clearance: 40 },
+  violet: { id: 'violet', position: new Vector3(440, 250, -2850), radius: 12, clearance: 36 },
+  dawn: { id: 'dawn', position: new Vector3(-560, 520, -3700), radius: 17, clearance: 46 },
 };
 
 /** Eş yıldızın ana yıldıza göre yörünge yarıçapı (ana yarıçap biriminde). */
@@ -105,20 +109,33 @@ export function buildFlightCurve(from: Vector3, to: Vector3, destination: StarId
 
   const curve = new CubicBezierCurve3(from.clone(), c1, c2, to.clone());
   const bodies = Object.values(stars);
-  for (let iteration = 0; iteration < 8; iteration++) {
+  const point = new Vector3();
+  const nearest = new Vector3();
+  for (let iteration = 0; iteration < 32; iteration++) {
     let adjusted = false;
     for (const body of bodies) {
-      const distance = closestApproach(curve, body);
-      if (distance < body.clearance) {
-        // Kontrol noktalarını yıldızdan uzaklaştır.
-        for (const control of [curve.v1, curve.v2]) {
-          const away = control.clone().sub(body.position);
-          away.z *= 0.35;
-          if (away.lengthSq() < 1) away.set(1, 0.6, 0);
-          control.addScaledVector(away.normalize(), body.clearance * 1.4);
-        }
-        adjusted = true;
+      let min = Infinity, at = 0;
+      for (let sample = 0; sample <= 320; sample++) {
+        const t = sample / 320;
+        curve.getPoint(t, point);
+        const distance = point.distanceTo(body.position);
+        if (distance < min) { min = distance; at = t; nearest.copy(point); }
       }
+      const safe = body.clearance + 6;
+      if (min >= safe) continue;
+      // Bezier kontrol noktaları, en yakın noktayı dışarı itecek ağırlıklarla
+      // güncellenir. Yalnız kontrol merkezini itmek başlangıç yıldızına geri dönebiliyordu.
+      const w1 = 3 * (1 - at) ** 2 * at;
+      const w2 = 3 * (1 - at) * at ** 2;
+      const weight = w1 * w1 + w2 * w2;
+      if (weight < 1e-6) continue; // Hedefler yıldızların dışında seçilir.
+      const away = nearest.clone().sub(body.position);
+      if (away.lengthSq() < 1e-6) away.crossVectors(diff, new Vector3(0, 1, 0));
+      if (away.lengthSq() < 1e-6) away.set(1, 0, 0);
+      away.normalize().multiplyScalar(safe - min + 2);
+      curve.v1.addScaledVector(away, w1 / weight);
+      curve.v2.addScaledVector(away, w2 / weight);
+      adjusted = true;
     }
     if (!adjusted) break;
   }

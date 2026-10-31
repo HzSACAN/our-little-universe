@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
+import { letter } from '../content/letter';
 import { memories, type Memory, type StarId } from '../content/memories';
 
 interface ModalProps {
@@ -33,7 +34,7 @@ function Modal({ open, onClose, labelledBy, className, children }: ModalProps) {
     const handleClose = () => {
       onCloseRef.current();
       const target = lastFocus.current;
-      if (target?.isConnected && !target.closest('[hidden]') && !(target as HTMLButtonElement).disabled) {
+      if (!document.querySelector('dialog[open]') && target?.isConnected && !target.closest('[hidden]') && !(target as HTMLButtonElement).disabled) {
         target.focus({ preventScroll: true });
       }
     };
@@ -63,9 +64,10 @@ interface MemoryDialogProps {
   open: boolean;
   onClose: () => void;
   onNext: () => void;
+  nextLabel: string;
 }
 
-export function MemoryDialog({ memory, open, onClose, onNext }: MemoryDialogProps) {
+export function MemoryDialog({ memory, open, onClose, onNext, nextLabel }: MemoryDialogProps) {
   return (
     <Modal open={open && !!memory} onClose={onClose} labelledBy="memory-title" className="memory-dialog">
       {memory && (
@@ -93,7 +95,7 @@ export function MemoryDialog({ memory, open, onClose, onNext }: MemoryDialogProp
             </p>
             <div className="memory-actions">
               <button className="text-button" type="button" onClick={onNext}>
-                Sıradaki yıldıza git <span aria-hidden="true">↗</span>
+                {nextLabel} <span aria-hidden="true">↗</span>
               </button>
               <span>
                 0{memory.index} / 0{memories.length}
@@ -125,7 +127,7 @@ export function ListDialog({ open, visited, onClose, onPick }: ListDialogProps) 
         <br />
         <em>kocaman bir biz.</em>
       </h2>
-      <p className="list-note">İlk önizlemede iki yıldız var. Diğer anılar sonra eklenecek.</p>
+      <p className="list-note">Altı küçük durak. Her keşifle gökyüzümüzde yeni bir çizgi.</p>
       <ul className="memory-list">
         {memories.map((m) => (
           <li key={m.id}>
@@ -141,4 +143,18 @@ export function ListDialog({ open, visited, onClose, onPick }: ListDialogProps) 
       </ul>
     </Modal>
   );
+}
+
+
+export function LetterDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return <Modal open={open} onClose={onClose} labelledBy="letter-title" className="letter-dialog">
+    <button className="close" type="button" onClick={onClose} aria-label="Mektubu kapat">✕</button>
+    <div className="eyebrow">06 · 11 / BİZİM GÜNÜMÜZ</div>
+    <span className="letter-star" aria-hidden="true">✧</span>
+    <h2 id="letter-title">{letter.greeting}</h2>
+    {letter.paragraphs.map((p) => <p className="letter-paragraph" key={p}>{p}</p>)}
+    <p className="letter-signature">{letter.signature}</p>
+    <p className="letter-note">{letter.note}</p>
+    <button className="text-button" type="button" onClick={onClose}>Gökyüzümüze dön <span aria-hidden="true">↖</span></button>
+  </Modal>;
 }

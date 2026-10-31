@@ -1,5 +1,5 @@
 import { forwardRef } from 'react';
-import { memories, type Memory, type StarId } from '../content/memories';
+import { isComplete, memories, nextUnvisited, type Memory, type StarId } from '../content/memories';
 
 export function Intro({ onBegin }: { onBegin: () => void }) {
   return (
@@ -55,13 +55,24 @@ export const FlightStatus = forwardRef<HTMLElement, { label: string }>(function 
   );
 });
 
+export function CompletionPanel({ onLetter }: { onLetter: () => void }) {
+  return <section className="completion-panel" aria-labelledby="completion-title">
+    <div className="eyebrow">ALTI YILDIZ · BİR TAKIMYILDIZ</div>
+    <h2 id="completion-title">Bütün yollar,<br/><em>sana.</em></h2>
+    <p>Gökyüzümüz tamamlandı, Yağmur.<br/>Şimdi sana birkaç sözüm var.</p>
+    <button className="primary" type="button" onClick={onLetter}>Sana bir mektup <span aria-hidden="true">↗</span></button>
+  </section>;
+}
+
 interface ArrivalPanelProps {
   memory: Memory;
+  complete: boolean;
+  onLetter: () => void;
   onOpen: () => void;
 }
 
 export const ArrivalPanel = forwardRef<HTMLHeadingElement, ArrivalPanelProps>(function ArrivalPanel(
-  { memory, onOpen },
+  { memory, onOpen, complete, onLetter },
   titleRef,
 ) {
   return (
@@ -71,9 +82,10 @@ export const ArrivalPanel = forwardRef<HTMLHeadingElement, ArrivalPanelProps>(fu
         {memory.title}
       </h2>
       <p>{memory.summary}</p>
-      <button className="text-button" type="button" onClick={onOpen}>
+      <div className="arrival-actions"><button className="text-button" type="button" onClick={onOpen}>
         Anıyı aç <span aria-hidden="true">↗</span>
       </button>
+      {complete && <button className="text-button" type="button" onClick={onLetter}>Mektubunu aç <span aria-hidden="true">✧</span></button>}</div>
       <span className="sample-note">Örnek anı · Gerçek hikâyenizle değiştirilecek</span>
     </section>
   );
@@ -86,11 +98,13 @@ interface NavigationProps {
   atHome: boolean;
   onTravel: (id: StarId) => void;
   onHome: () => void;
+  onLetter: () => void;
 }
 
-export function Navigation({ current, visited, locked, atHome, onTravel, onHome }: NavigationProps) {
+export function Navigation({ current, visited, locked, atHome, onTravel, onHome, onLetter }: NavigationProps) {
   const index = current ? memories.findIndex((m) => m.id === current) : -1;
-  const next = memories[(index + 1) % memories.length];
+  const complete = isComplete(visited);
+  const next = nextUnvisited(current, visited);
   const previous = memories[(index - 1 + memories.length) % memories.length];
   return (
     <nav className="navigation" aria-label="Anılar arasında yolculuk">
@@ -120,8 +134,8 @@ export function Navigation({ current, visited, locked, atHome, onTravel, onHome 
             </button>
           ))}
         </div>
-        <button className="next-destination" type="button" disabled={locked} onClick={() => onTravel(index < 0 ? memories[0].id : next.id)}>
-          <span>{index < 0 ? 'İlk yıldıza' : 'Sıradaki yıldıza'}</span>
+        <button className="next-destination" type="button" disabled={locked} onClick={() => complete ? (atHome ? onLetter() : onHome()) : onTravel(next)}>
+          <span>{complete ? (atHome ? 'Sana bir mektup' : 'Takımyıldızımızı gör') : 'Sıradaki yıldıza'}</span>
           <span aria-hidden="true">↗</span>
         </button>
       </div>
@@ -129,7 +143,7 @@ export function Navigation({ current, visited, locked, atHome, onTravel, onHome 
         <button type="button" onClick={onHome} disabled={locked || atHome}>
           ↖ Tüm evreni gör
         </button>
-        <span>
+        <span role="status">
           {visited.length} / {memories.length} anı keşfedildi
         </span>
       </div>
@@ -151,7 +165,7 @@ export function Footer({ hint }: { hint: string }) {
         </span>
       </div>
       <p className="gesture-hint">{hint}</p>
-      <span className="preview-label">İLK ÖNİZLEME · ÖRNEK ANILAR</span>
+      <span className="preview-label">TASARIM ÖNİZLEMESİ · ÖRNEK ANILAR</span>
     </footer>
   );
 }

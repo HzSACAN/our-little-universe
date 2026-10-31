@@ -1,4 +1,6 @@
-# Bizim Küçük Evrenimiz — iki yıldızlık görsel pilot
+# Bizim Küçük Evrenimiz — iki yıldızlık pilot ve altı yıldız geliştirme noktası
+
+> **Güncel dal notu:** Altı yıldız, takımyıldız ve mektup için derlenebilir bir geliştirme noktası eklendi; yeni sürümün WebGL ve görsel kabulü tamamlanmadı. Mevcut uygulanan kapsam ve Claude için kalan işler: [Devir kaydı](docs/DEVIR-ALTI-YILDIZ-2026-10-31.md). Aşağıdaki pilot kapsamı ve performans ölçümleri önceki iki yıldızlık teslimin tarihsel kaydıdır.
 
 Hazret’ten Yağmur’a, 6 Kasım için. Bu klasör, başlangıç paketindeki şartnamelere göre kurulan ilk gerçek uygulamadır: renkli, üç boyutlu bir uzayda **iki anı yıldızı** arasında kamera yolculuğu. Altı yıldız, takımyıldız ve mektup bu aşamanın kapsamında değil; içerikler açıkça **örnektir**.
 

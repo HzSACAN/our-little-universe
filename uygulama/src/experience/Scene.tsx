@@ -11,6 +11,7 @@ import { qualitySettings, type QualityTier } from './quality';
 import { Sky } from './Sky';
 import { Nebula } from './Nebula';
 import { Starfield } from './Starfield';
+import { Constellation } from './Constellation';
 import { MemoryStars } from './MemoryStars';
 import { CameraRig } from './CameraRig';
 import { LabelProjector } from './LabelProjector';
@@ -22,6 +23,7 @@ interface SceneProps {
   flight: Flight | null;
   bridge: SceneBridge;
   tier: QualityTier;
+  visited: StarId[];
   running: boolean;
   interactive: boolean;
   onArrive: (flightId: number) => void;
@@ -38,7 +40,7 @@ const disabled = new Set(
 );
 
 export function Scene(props: SceneProps) {
-  const { layout, at, flight, bridge, tier, running, interactive, onArrive, onSelect, onContextLost, onSlow } = props;
+  const { layout, at, flight, bridge, tier, visited, running, interactive, onArrive, onSelect, onContextLost, onSlow } = props;
   const q = qualitySettings(tier);
   return (
     <Canvas
@@ -60,6 +62,7 @@ export function Scene(props: SceneProps) {
         <Nebula share={q.nebulaShare} octaves={q.nebulaOctaves} resolution={q.nebulaResolution} bridge={bridge} />
       )}
       {!disabled.has('memory') && <MemoryStars bridge={bridge} interactive={interactive} onSelect={onSelect} />}
+      <Constellation visited={visited} bridge={bridge} />
       <CameraRig layout={layout} at={at} flight={flight} bridge={bridge} onArrive={onArrive} running={running} />
       <LabelProjector bridge={bridge} />
       <QualityGovernor tier={tier} running={running} onSlow={onSlow} />
