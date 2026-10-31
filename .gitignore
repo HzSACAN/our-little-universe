@@ -1,0 +1,6 @@
+node_modules/
+uygulama/dist/
+*.log
+.vite/
+uygulama/scripts/.cikti/
+.claude/settings.local.json
