@@ -11,6 +11,7 @@ import { forcedTier, qualitySettings, type QualityTier } from './quality';
 import { Sky } from './Sky';
 import { Nebula } from './Nebula';
 import { TexturedNebula } from './TexturedNebula';
+import { JourneyNebula } from './JourneyNebula';
 import { Starfield } from './Starfield';
 import { Constellation } from './Constellation';
 import { MemoryStars } from './MemoryStars';
@@ -49,7 +50,7 @@ export function Scene(props: SceneProps) {
       dpr={q.dpr}
       frameloop={running ? 'always' : 'never'}
       gl={{ antialias: false, powerPreference: 'high-performance', alpha: false, stencil: false, depth: true }}
-      camera={{ fov: 50, near: 0.5, far: 9000, position: [0, 0, 300] }}
+      camera={{ fov: 50, near: 0.5, far: 14000, position: [0, 0, 300] }}
       onCreated={({ gl }) => {
         gl.toneMapping = NoToneMapping;
         gl.setClearColor('#040616', 1);
@@ -58,7 +59,7 @@ export function Scene(props: SceneProps) {
       aria-hidden
     >
       <ContextWatcher onLost={onContextLost} />
-      {!disabled.has('sky') && <Sky octaves={q.skyOctaves} />}
+      {!disabled.has('sky') && <Sky />}
       {!disabled.has('stars') && <Starfield far={q.farStars} mid={q.midStars} dust={q.dust} bridge={bridge} />}
       {!disabled.has('nebula') && (
         <Nebula share={q.nebulaShare} octaves={q.nebulaOctaves} resolution={q.nebulaResolution} sharpen={q.nebulaSharpen} bridge={bridge} />
@@ -68,6 +69,7 @@ export function Scene(props: SceneProps) {
       <Constellation visited={visited} bridge={bridge} />
       {!disabled.has('memory') && <Beacons />}
       <CameraRig layout={layout} at={at} flight={flight} bridge={bridge} onArrive={onArrive} running={running} />
+      {!disabled.has('hacim') && <JourneyNebula tier={tier} bridge={bridge} />}
       <LabelProjector bridge={bridge} />
       <QualityGovernor tier={tier} running={running} onSlow={onSlow} />
       <PerfProbe tier={tier} />
@@ -83,7 +85,7 @@ export function Scene(props: SceneProps) {
           levels={q.bloomLevels}
         />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
-        <Vignette offset={0.32} darkness={0.42} />
+        <Vignette offset={0.32} darkness={0.22} />
       </EffectComposer>
       )}
     </Canvas>

@@ -249,7 +249,7 @@ export function Nebula({ share, octaves, resolution, sharpen, bridge }: NebulaPr
   useFrame(({ camera }, delta) => {
     if (!bridge.reducedMotion) res.mat.uniforms.uTime.value += Math.min(delta, 0.05);
     // Açılış ve ilk yıldız rotasında ayrıntılı dokular öne çıkar, prosedürel sis geri çekilir;
-    // kamera derine ilerledikçe uçuş boyunca yumuşakça tam güce döner (texturedNebulaLayout.ts).
+    // derindeki rotalarda da ayrıntılı gökyüzünü örtmeyecek yoğunlukta kalır.
     res.mat.uniforms.uDim.value = proceduralDim(camera.position.z);
     const previous = gl.getRenderTarget();
     const autoClear = gl.autoClear;

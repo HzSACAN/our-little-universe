@@ -29,7 +29,7 @@ varying float vBright;
 void main(){
   vec4 mv=modelViewMatrix*vec4(position,1.);
   gl_Position=projectionMatrix*mv;
-  float size=aSize*uScale/max(1.,-mv.z);
+  float size=aSize*uScale*.72/max(1.,-mv.z);
   // Görsel hiyerarşi: sayısız küçük, keskin nokta; seçilmiş az sayıda parlak yıldız
   // ince dört kollu bir parıltı taşır (kolların sığması için daha büyük nokta alanı).
   // Parlak yıldızların yalnız küçük, rastgele bir bölümü (faz ile seçilir) parıltı taşır.
@@ -42,7 +42,7 @@ void main(){
   // Bütün gökyüzü aynı ritimde parlamaz: yalnızca bir kısmı yavaşça titrer.
   float tw=aPhase>3.5?.72+.28*sin(uTime*(.4+aPhase*.08)+aPhase*7.):1.;
   vColor=aColor;
-  vAlpha=tw*clamp(size/1.4,.3,1.);
+  vAlpha=tw*clamp(size/1.4,.16,.82);
 }
 `;
 

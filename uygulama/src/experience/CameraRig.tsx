@@ -82,7 +82,7 @@ export function CameraRig({ layout, at, flight, bridge, onArrive, running }: Cam
     camera.quaternion.copy(baseQuat.current);
     camera.fov = fovFor(at, layout);
     camera.near = 0.5;
-    camera.far = 9000;
+    camera.far = 14000;
     camera.updateProjectionMatrix();
     settle.current = bridge.reducedMotion ? 0 : 1;
     // Yalnızca kurulumda çalışır; sonraki değişiklikler aşağıdaki efektlerde.

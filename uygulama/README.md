@@ -1,5 +1,9 @@
 # Bizim Küçük Evrenimiz — Y takımyıldızı, yıldıza dokunarak anılar ve mektup
 
+> **Güncel:** Daha aydınlık gökyüzü ve kameranın içinden geçtiği altı hacimsel gaz bölgesi eklendi. [Uçuş kaydı ve doğrulama notları](docs/galaksi-yenileme/hacim/README.md).
+
+> **Güncel görsel sürüm — 2 Kasım 2026:** Yeni galaksi dokusu, dünya konumu sabit uzak küre ve hafif gaz katmanları uygulandı. [Önce/sonra görüntüleri, mimari ve doğrulama](docs/galaksi-yenileme/README.md). Aşağıdaki dokulu pilot bölümü önceki altı katmanlı yaklaşımın tarihsel kaydıdır; güncel görünümü tarif etmez.
+
 Hazret’ten Yağmur’a, 6 Kasım için. Renkli, üç boyutlu bir uzayda farklı derinliklerdeki **altı anı yıldızı** arasında kamera yolculuğu. Genel görünümde altı yıldız, Yağmur’un baş harfi olan bir **Y** takımyıldızı oluşturur; anılar **yıldızın kendisine dokunarak** açılır; altı farklı yıldız keşfedilince mektup açılır.
 
 Tüm anı metinleri, fotoğraf alanları ve mektup hâlâ açıkça **örnektir**. Gerçek anılar, fotoğraflar, mektup ve ilişkinin başlangıç yılı verilmedi ve uydurulmadı (bkz. “İçerik bekleyenler”).
@@ -62,7 +66,7 @@ React 19.3 · TypeScript 7 · Vite 8 · three 0.186 · @react-three/fiber 9.8 ·
 | `src/experience/Nebula.tsx`, `nebulaLayout.ts`, `noiseTexture.ts` | Y çevresindeki damarlar boyunca hacim parçacıkları; damar başına ortak dünya gaz alanı; geniş gövde → orta doku → yalnız parlak kenar ve yoğunlaşmalarda ince ayrıntı; yumuşak toz; bölgesel renk vurguları; renk korumalı ton sıkıştırma; 4 kanallı 3B gürültü dokusu. |
 | `src/experience/TexturedNebula.tsx`, `texturedNebulaLayout.ts` | Açılış pilotu: dünya uzayında sabit, ayrıntılı bulutsu dokuları (paylaşılan doku önbelleği, premultiplied alfa, yakınlık/açı sönümü, kalite önceliği); prosedürel bulutsunun yerel ve kameraya bağlı kısılması. |
 | `public/assets/nebula/` | Paketten gelen iki saydam bulutsu dokusu (orijinal). |
-| `src/experience/Sky.tsx`, `Starfield.tsx`, `Beacons.tsx` | Küp dokuya pişirilen koyu lacivert atmosfer; keskin küçük yıldızlar ve seçilmiş az sayıda dört kollu parıltı; yakın toz; uzak anı yıldızlarının parıltısı. |
+| `src/experience/Sky.tsx`, `Starfield.tsx`, `Beacons.tsx` | Ayrıntılı galaksi dokulu, dünya konumu sabit uzak küre; keskin küçük yıldızlar ve seçilmiş az sayıda dört kollu parıltı; yakın toz; uzak anı yıldızlarının parıltısı. |
 | `src/experience/Constellation.tsx` | Y kenarlarını iki ucu keşfedilince, korona kenarından başlayarak açar. |
 | `src/experience/Scene.tsx`, `quality.ts`, `timing.ts` | Tek Canvas, bloom + ACES + vinyet, bağlam kaybı, kalite yöneticisi, ölçüm kancası. |
 | `src/App.tsx`, `src/ui/*`, `src/styles.css` | HTML arayüz; `ui/StarTarget.tsx` yıldızın erişilebilir hedefi ve ipucu; `ui/Dialogs.tsx` yıldızdan doğan/oraya dönen anı geçişi. |
@@ -442,7 +446,7 @@ Gerçek anılar, fotoğraflar ve mektup gelmedi; bu bölüm tamamlanmış sayıl
 
 ### Görsel kabul bekleyenler
 
-**Dokulu açılış pilotu** (`docs/ekranlar-dokulu-pilot/`): onaylanana kadar tamamlanmış sayılmaz; kalan sınırlamalar pilot bölümünde. Prosedürel 2 Kasım revizyonu (`docs/ekranlar-bulutsu-revizyon/`) beğenilmedi; pilot onun yerine açılışı taşıyor. Ayrıca: toz miktarı, parıltılı yıldız sayısı, ipucunun konumu ve dili, anı geçişinin süresi, Y’nin biçimi (özellikle kol açıları ve telefondaki boyutu). Bilinen: R3F kaynaklı `THREE.Clock` kullanım dışı uyarısı sürüyor.
+**Güncel galaksi yenilemesi** (`docs/galaksi-yenileme/`): çalışan uygulamaya eklendi ve tarayıcıda doğrulandı; kullanıcının estetik kabulü ve gerçek cihaz değerlendirmesi bekleniyor. Önceki dokulu pilot ile prosedürel revizyon tarihsel karşılaştırmadır. Ayrıca: toz miktarı, parıltılı yıldız sayısı, ipucunun konumu ve dili, anı geçişinin süresi, Y’nin biçimi (özellikle kol açıları ve telefondaki boyutu). Bilinen: R3F kaynaklı `THREE.Clock` kullanım dışı uyarısı sürüyor.
 
 ---
 

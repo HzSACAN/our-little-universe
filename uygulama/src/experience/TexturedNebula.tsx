@@ -39,6 +39,7 @@ uniform float uOpacity;
 uniform float uExposure;
 uniform float uMirror;
 uniform vec2 uFade;
+uniform vec2 uFarFade;
 uniform vec3 uCenter;
 uniform vec3 uNormal;
 varying vec2 vUv;
@@ -66,8 +67,9 @@ void main(){
   // Kamera yüzeye yaklaşınca ya da yüzeyi yandan görünce (kart kenarı) yumuşakça söner.
   float plane=abs(dot(cameraPosition-uCenter,uNormal));
   float near=smoothstep(uFade.x,uFade.y,plane);
+  float far=1.-smoothstep(uFarFade.x,uFarFade.y,plane);
   float facing=smoothstep(.12,.42,abs(dot(normalize(cameraPosition-vWorld),uNormal)));
-  float a=t.a*body*uOpacity*edge*near*facing;
+  float a=t.a*body*uOpacity*edge*near*far*facing;
   gl_FragColor=vec4(color*a,a);
 }
 `;
@@ -152,6 +154,7 @@ export function TexturedNebula({ tier, bridge }: TexturedNebulaProps) {
             uExposure: { value: layer.exposure },
             uMirror: { value: layer.mirror ? 1 : 0 },
             uFade: { value: [layer.fade[0], layer.fade[1]] },
+            uFarFade: { value: layer.farFade ?? [100000, 200000] },
             uCenter: { value: layer.center.clone() },
             uNormal: { value: layer.normal.clone() },
           },
@@ -208,7 +211,7 @@ export function TexturedNebula({ tier, bridge }: TexturedNebulaProps) {
       m.shown = ready ? (bridge.reducedMotion ? 1 : Math.min(1, m.shown + delta / 0.8)) : 0;
       // Kameraya çok yakın ya da tamamen sönmüş katman çizilmez (doldurma maliyeti).
       const plane = Math.abs(toCamera.copy(camera.position).sub(m.layer.center).dot(m.layer.normal));
-      m.mesh.visible = m.shown > 0 && plane > m.layer.fade[0];
+      m.mesh.visible = m.shown > 0 && plane > m.layer.fade[0] && plane < (m.layer.farFade?.[1] ?? Infinity);
       m.material.uniforms.uOpacity.value = m.layer.opacity * m.shown;
     }
   });

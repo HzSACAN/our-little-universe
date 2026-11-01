@@ -373,7 +373,7 @@ p {
   text-shadow: 0 1px 10px rgba(4, 6, 22, 0.95), 0 0 2px rgba(4, 6, 22, 0.9);
   padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(4, 6, 22, 0.38);
+  background: rgba(4, 6, 22, 0.60);
 }
 .world-label[data-side='top'] .world-name {
   top: auto;
@@ -555,6 +555,7 @@ p {
 
 /* ---------- Alt bilgi ---------- */
 .space-footer {
+  text-shadow: 0 1px 5px #030712, 0 0 14px #030712;
   position: absolute;
   z-index: 2;
   left: 0;
@@ -594,6 +595,9 @@ p {
   color: var(--muted);
 }
 .gesture-hint {
+  padding: 7px 12px;
+  border-radius: 20px;
+  background: rgba(3, 7, 18, 0.55);
   font: italic 15px/1.4 Celestial, Georgia, serif;
   color: var(--dim);
 }
@@ -1187,6 +1191,10 @@ dialog[open] {
   border-radius: 50%;
 }
 .star-hint {
+  padding: 8px 12px;
+  border-radius: 20px;
+  background: rgba(3, 7, 18, 0.72);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
   position: absolute;
   left: 0;
   top: 0;

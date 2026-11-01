@@ -8,12 +8,10 @@ import { HOME_EYE } from './world';
 // (merkez v ≈ −0.27). Bu yüzden ayrıntı Y'nin arkasına ve sağına, başlığın tarafı ise
 // sakin ve koyu kalır.
 
-export type NebulaTextureId = 'cyan-gold' | 'rose-violet';
+export type NebulaTextureId = 'veil';
 
 export const nebulaTextures: Record<NebulaTextureId, { file: string; aspect: number }> = {
-  // Kaynak PNG'ler 1672×941, düz (premultiplied olmayan) alfa.
-  'cyan-gold': { file: 'assets/nebula/nebula-cyan-gold.png', aspect: 941 / 1672 },
-  'rose-violet': { file: 'assets/nebula/nebula-rose-violet.png', aspect: 941 / 1672 },
+  'veil': { file: 'assets/nebula/galaxy-veil.png', aspect: 0.5 },
 };
 
 export interface TexturedLayer {
@@ -35,40 +33,51 @@ export interface TexturedLayer {
   exposure: number;
   /** Düzleme uzaklığa göre sönümleme: bu aralıkta tamamen görünmezden tam görünüre geçer. */
   fade: [number, number];
+  /** Yakın geçitler yalnız bu uzaklığa kadar çizilir; sona doğru yumuşakça söner. */
+  farFade?: [number, number];
   /** Kalite önceliği: 1 ana kompozisyon; büyük sayı önce kapanır. */
   priority: 1 | 2 | 3;
 }
 
 export const texturedLayers: TexturedLayer[] = [
-  // Ana ışık kütlesi: Y'nin arkasında, sağa doğru iniyor. Şampanya çekirdek, turkuaz akış.
+  // Gaz hacimlerinin ince ışıklı kenarları. Rotalar bu düzeyleri gerçekten geçer;
+  // yaklaşırken ayrıntı kenarlardan akar, iç kısım JourneyNebula hacmiyle sürer.
   {
-    id: 'cekirdek', texture: 'cyan-gold', u: 0.15, v: -0.04, distance: 5200, width: 0.86,
-    roll: -26, mirror: false, tilt: [6, -4], opacity: 1, exposure: 1, fade: [500, 1400], priority: 1,
+    id: 'gecit-1', texture: 'veil', u: -.4, v: -.3, distance: 300, width: 3.4,
+    roll: 18, mirror: false, tilt: [10, -8], opacity: .38, exposure: .9, fade: [12, 100], farFade: [1100, 1600], priority: 1,
   },
-  // Sağ üstte pembe-mor yay; referanstaki üst bölge.
   {
-    id: 'ust-mor', texture: 'rose-violet', u: 0.36, v: 0.34, distance: 6400, width: 0.74,
-    roll: -14, mirror: false, tilt: [-5, 8], opacity: 0.72, exposure: 0.9, fade: [600, 1600], priority: 1,
+    id: 'gecit-2', texture: 'veil', u: .077, v: -.106, distance: 1040, width: 1.2,
+    roll: -48, mirror: true, tilt: [-8, 14], opacity: .38, exposure: 1, fade: [15, 130], farFade: [1100, 1600], priority: 1,
   },
-  // Sağ altta daha yakın turkuaz kütle: uçuşta ve bakınmada ana katmandan ayrışır.
   {
-    id: 'alt-turkuaz', texture: 'cyan-gold', u: 0.3, v: -0.31, distance: 3000, width: 0.6,
-    roll: 32, mirror: true, tilt: [-8, 10], opacity: 0.6, exposure: 0.75, fade: [300, 900], priority: 2,
+    id: 'gecit-3', texture: 'veil', u: .048, v: .048, distance: 1670, width: .85,
+    roll: 112, mirror: false, tilt: [12, 8], opacity: .38, exposure: .85, fade: [15, 140], farFade: [1100, 1600], priority: 1,
   },
-  // En arkada, Y'nin çevresinde sönük, geniş mor gaz: yıldızlar koyu boşlukta asılı kalmaz.
   {
-    id: 'derin-mor', texture: 'rose-violet', u: 0.02, v: 0.1, distance: 7600, width: 1,
-    roll: 152, mirror: true, tilt: [4, -6], opacity: 0.5, exposure: 0.6, fade: [700, 1800], priority: 2,
+    id: 'gecit-4', texture: 'veil', u: -.013, v: .124, distance: 2250, width: .7,
+    roll: 166, mirror: true, tilt: [-12, -6], opacity: .36, exposure: .95, fade: [15, 140], farFade: [1100, 1600], priority: 1,
   },
-  // Sağ alt ön planda koyu, tozlu kütle: ışıklı kenarlı karanlık bulut (referansın ön planı).
   {
-    id: 'on-toz', texture: 'rose-violet', u: 0.34, v: -0.4, distance: 1800, width: 0.5,
-    roll: 196, mirror: false, tilt: [6, 14], opacity: 0.75, exposure: 0.38, fade: [200, 600], priority: 3,
+    id: 'gecit-5', texture: 'veil', u: -.028, v: .186, distance: 2850, width: .65,
+    roll: 65, mirror: false, tilt: [8, -10], opacity: .38, exposure: 1, fade: [15, 150], farFade: [1100, 1600], priority: 1,
   },
-  // Kameraya yakın, sağ üstte ince tül: ilk yıldıza uçuşta en güçlü paralaks katmanı.
   {
-    id: 'yakin-tul', texture: 'rose-violet', u: 0.42, v: 0.3, distance: 950, width: 0.45,
-    roll: -38, mirror: true, tilt: [10, -12], opacity: 0.3, exposure: 0.8, fade: [120, 420], priority: 3,
+    id: 'gecit-6', texture: 'veil', u: .072, v: .222, distance: 3470, width: .55,
+    roll: -23, mirror: true, tilt: [-8, 8], opacity: .35, exposure: .9, fade: [15, 150], farFade: [1100, 1600], priority: 1,
+  },
+  // Restrained world-space wisps; the distant sky carries the composition.
+  {
+    id: 'yakin-mavi-tul', texture: 'veil', u: 0.45, v: -0.35, distance: 1600, width: 1.6,
+    roll: -12, mirror: false, tilt: [8, -12], opacity: 0.22, exposure: 0.48, fade: [200, 850], priority: 1,
+  },
+  {
+    id: 'uzak-mor-tul', texture: 'veil', u: -0.65, v: 0.55, distance: 4200, width: 1.5,
+    roll: 42, mirror: true, tilt: [-15, 8], opacity: 0.16, exposure: 0.5, fade: [450, 1500], priority: 2,
+  },
+  {
+    id: 'yan-gaz', texture: 'veil', u: 0.95, v: 0.25, distance: 2700, width: 1.15,
+    roll: 110, mirror: false, tilt: [-5, 20], opacity: 0.12, exposure: 0.45, fade: [350, 1200], priority: 3,
   },
 ];
 
@@ -125,13 +134,8 @@ export function texturedCover(point: Vector3): number {
   return cover;
 }
 
-/**
- * Prosedürel bulutsunun kameraya bağlı gücü. Açılışta ve ilk yıldız rotasında (kamera
- * z > −350) %40'ta kalır: referanstaki koyu lacivert boşluklar ve ayrıntılı dokular okunur.
- * Kamera derine ilerledikçe (z −350 → −1100, ikili yıldıza doğru) yumuşakça tam güce döner;
- * diğer rotalarda stil ani değişmez.
- */
+/** Local moving gas stays restrained throughout every route. */
 export function proceduralDim(cameraZ: number) {
   const t = Math.min(1, Math.max(0, (-350 - cameraZ) / 750));
-  return 0.4 + 0.6 * t * t * (3 - 2 * t);
+  return 0.055 + 0.065 * t * t * (3 - 2 * t);
 }
