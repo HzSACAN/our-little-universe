@@ -70,6 +70,11 @@ function Modal({ open, onClose, labelledBy, className, closeLabel, origin, openD
     if (!dialog) return;
     if (open && !dialog.open) {
       const show = () => {
+        // Gecikme sırasında başka bir dialog açıldıysa bu istek düşer: aynı anda tek dialog.
+        if (document.querySelector('dialog[open]')) {
+          props.current.onClose();
+          return;
+        }
         lastFocus.current = document.activeElement as HTMLElement | null;
         dialog.classList.remove('closing');
         dialog.showModal();
@@ -77,8 +82,22 @@ function Modal({ open, onClose, labelledBy, className, closeLabel, origin, openD
         aim(dialog);
       };
       if (openDelay > 0) {
-        const timer = setTimeout(show, openDelay);
-        return () => clearTimeout(timer);
+        // Açılmayı beklerken Escape, bekleyen açılışı iptal eder; dialog açılınca Escape'i tarayıcı yönetir.
+        const stop = () => {
+          clearTimeout(timer);
+          document.removeEventListener('keydown', cancel);
+        };
+        const cancel = (e: KeyboardEvent) => {
+          if (e.key !== 'Escape') return;
+          stop();
+          props.current.onClose();
+        };
+        const timer = setTimeout(() => {
+          stop();
+          show();
+        }, openDelay);
+        document.addEventListener('keydown', cancel);
+        return stop;
       }
       show();
     } else if (!open && dialog.open) {

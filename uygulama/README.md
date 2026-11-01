@@ -29,6 +29,7 @@ Yerelde Chrome ve **gerçek WebGL2 GPU’su** gerekir (`CHROME` ve `BASE` ortam 
 
 ```bash
 pnpm dogrula:yildiz     # yıldıza dokunma: fare/dokunma, sürükleme, çoklu dokunma, touchcancel, eş yıldız, odak
+pnpm dogrula:dialog     # çakışan dialog istekleri: dokunuş + liste/yolculuk/ana sayfa/Escape, tek dialog kuralı
 pnpm dogrula:ekranlar   # 360/430/844 ve masaüstü: taşma, 44 px, ipucu ve etiket çakışması, anı geçişi
 pnpm dogrula:tur        # altı yıldız turu farklı sıralarla, Y genel görünümü, etiket çakışması
 pnpm dogrula:mektup     # mektup kilidi, anıdan mektuba, Escape/odak, bağlam kaybı, WebGL yedeği
@@ -51,21 +52,139 @@ React 19.3 · TypeScript 7 · Vite 8 · three 0.186 · @react-three/fiber 9.8 ·
 |---|---|
 | `src/content/memories.ts`, `letter.ts` | Altı örnek anı ve **hikâye sırası**, benzersiz keşif kontrolü, örnek mektup. Görsel koddan ayrıdır; gerçek içerik buraya gelecek. |
 | `src/experience/constellationGraph.ts` | **Y takımyıldızı**: yıldızların Y’deki rolü, genel görünüm göz noktasından yön/uzaklık düzeni ve hikâye sırasından bağımsız beş kenarlı bağlantı grafiği. |
-| `src/experience/state.ts` | Deneyim durumu: `intro → travelling → arrived / overview`, ziyaretler, mektup kilidi, `touchStar` (uzak yıldız → yolculuk, bulunulan yıldız → anı), varış kimliği, anısı açılmış yıldızlar. |
+| `src/experience/state.ts` | Deneyim durumu: `intro → travelling → arrived / overview`, ziyaretler, mektup kilidi, **birbirini dışlayan anı/mektup/liste dialogları**, `touchStar` (uzak yıldız → yolculuk, bulunulan yıldız → anı), varış kimliği, anısı açılmış yıldızlar. |
 | `src/experience/tapGuard.ts` | Dokunuş koruması: sürükleme, pointercancel, çoklu dokunma ve varıştan önce başlayan basış anı açmaz. |
 | `src/experience/world.ts` | Y düzeninden türetilen sabit dünya koordinatları, masaüstü/telefon kadrajları ve görüş açıları, yıldızlara çarpmayan 3B uçuş eğrisi. |
 | `src/experience/CameraRig.tsx` | Kameranın tek sahibi: uçuş, bakış ve görüş açısı geçişi, sınırlı bakınma, yeniden hedefleme, hareket azaltma. |
 | `src/experience/MemoryStars.tsx` | Altı yıldızın yüzeyi ve koronası; davet halkası, hover/odak tepkisi, anı açılırken korona genişlemesi ve yayılan ışık dalgası; eş yıldızın dünya konumu. |
 | `src/experience/LabelProjector.tsx` | Etiketleri, bulunulan yıldızın erişilebilir dokunma hedefini (eş yıldız dahil) ve ipucunu gerçek projeksiyonla konumlar; metin, başlık ve gezinmeden kaçınır. |
-| `src/experience/Nebula.tsx`, `nebulaLayout.ts`, `noiseTexture.ts` | Y çevresindeki damarlar boyunca hacim parçacıkları; damar başına ortak dünya gaz alanı, sırt filamentleri, toz şeritleri, renk korumalı ton sıkıştırma; 4 kanallı 3B gürültü dokusu. |
-| `src/experience/Sky.tsx`, `Starfield.tsx`, `Beacons.tsx` | Küp dokuya pişirilen koyu lacivert zemin; keskin küçük yıldızlar ve seçilmiş az sayıda dört kollu parıltı; yakın toz; uzak anı yıldızlarının parıltısı. |
+| `src/experience/Nebula.tsx`, `nebulaLayout.ts`, `noiseTexture.ts` | Y çevresindeki damarlar boyunca hacim parçacıkları; damar başına ortak dünya gaz alanı; geniş gövde → orta doku → yalnız parlak kenar ve yoğunlaşmalarda ince ayrıntı; yumuşak toz; bölgesel renk vurguları; renk korumalı ton sıkıştırma; 4 kanallı 3B gürültü dokusu. |
+| `src/experience/Sky.tsx`, `Starfield.tsx`, `Beacons.tsx` | Küp dokuya pişirilen lacivert/mavi atmosfer; keskin küçük yıldızlar ve seçilmiş az sayıda dört kollu parıltı; yakın toz; uzak anı yıldızlarının parıltısı. |
 | `src/experience/Constellation.tsx` | Y kenarlarını iki ucu keşfedilince, korona kenarından başlayarak açar. |
 | `src/experience/Scene.tsx`, `quality.ts`, `timing.ts` | Tek Canvas, bloom + ACES + vinyet, bağlam kaybı, kalite yöneticisi, ölçüm kancası. |
 | `src/App.tsx`, `src/ui/*`, `src/styles.css` | HTML arayüz; `ui/StarTarget.tsx` yıldızın erişilebilir hedefi ve ipucu; `ui/Dialogs.tsx` yıldızdan doğan/oraya dönen anı geçişi. |
 | `scripts/*.mjs` | Headless Chrome ile gerçek GPU’da otomatik kontroller, ölçüm, ekran görüntüsü ve video. |
-| `docs/ekranlar-y-surumu/` | Bu sürümün önce/sonra karşılaştırmaları, kabul kareleri ve videoları. Eski klasörler önceki sürümlere aittir. |
+| `docs/ekranlar-bulutsu-revizyon/` | 2 Kasım bulutsu revizyonu: Google referansı, 5d412ab, c9449cb ve revizyon aynı kadrajlarda. |
+| `docs/ekranlar-y-surumu/` | Y sürümünün (c9449cb) önce/sonra karşılaştırmaları, kabul kareleri ve videoları. Eski klasörler önceki sürümlere aittir. |
 
-## Bu sürümde yapılanlar (Claude, 1 Kasım 2026)
+## Bu turda yapılanlar (Claude, 2 Kasım 2026)
+
+### A. Bulutsu görsel revizyonu — Hazret’in görsel kabulünü bekliyor
+
+Geri bildirim: c9449cb daha ayrıntılı ama atmosferden uzaklaştı. Görüntüde kalın neon damarlar ve sert koyu oyuklar vardı, birçok renk aynı anda öne çıkıyordu. Önceki sürümün (5d412ab) renk uyumu ve yumuşak hacimleri daha başarılıydı. Hedef “daha keskin/kontrastlı/doygun” değil; bütünlüklü gaz hacimleri, doğal renk geçişleri ve seçili bölgelerde ince ayrıntı. Ana referans Google teması.
+
+Aynı kadrajlardaki karşılaştırmada nedenler koddaydı. Bloom, blur ve genel doygunluk değiştirilmedi.
+
+| c9449cb’deki neden | Görünen etki | Revizyon |
+|---|---|---|
+| Düşük frekanslı sırt gürültüsü (`pow(ridge,10)`, ölçek ×1,7) bütün gövdede tam güçle çiziliyordu. | Her yerde birbirine benzeyen kalın, kıvrımlı neon şeritler. | Bu katman kaldırıldı. İnce filament tek ve yüksek frekanslı (×3,8, `pow 18`). Yalnız gaz gövdesinin parlak kenar bandında ve damarın yoğunlaşma alanında görünür. |
+| Kapsama alanı dar bir eşikle (`-0.12…0.42`) ve erken `discard` ile boşluk açıyordu. | Sert, siyah yarıklar. | Kapsama geniş ve yumuşak (`-0.5…0.55`): boşluklar gazın inceldiği koyu bölgeler. |
+| Toz, keskin bir sırt alanından (`0.86…0.975`) geliyordu; alfa ×2,6. | Kabartma hissi veren koyu oyuklar. | Toz, düşük frekanslı bir alandan yumuşak geçişle gelir. Çekirdekleri örtmez; yoğunluğu ~%40’a indi. |
+| Parçacık maskesi düzdü; gövde yüksek eşikliydi (`0.5…0.84`). | Yarı saydam geniş gaz gövdeleri kayboldu. | Merkezden kenara yumuşak maske ve düşük eşikli geniş gövde (`0.34…0.84`). Orta ölçekli doku fbm’den gelir. |
+| Her damarda çekirdek rengi her yerde baskındı; birleştirmede doygunluk ×1,12. | Mor, turkuaz, fuşya, altın ve yeşil her bölgede aynı kuvvetteydi. | Renkler bölgesel bir alanla maskelenir: kenar rengi (çoğunlukla mavi/lacivert) her yerde, vurgu rengi yalnız yoğun kısımlarda ve kendi bölgesinde. Damar renkleri mavi, buz mavisi ve indigo ağırlıklı yeniden dağıtıldı. Doygunluk artışı kaldırıldı. |
+| Keskinleştirme bütün görüntüye uygulanıyordu. | Sönük gaz da sertleşiyordu. | Keskinleştirme yalnız parlak bölgelerde. |
+| Gökyüzü küp dokusu koyulaştırılmıştı. | Mavi atmosfer zemini yoktu. | 5d412ab’nin geniş lacivert/mavi atmosferi geri geldi; mor ve fuşya yalnız galaktik bant içinde. |
+
+Damar başına **yoğunlaşma gücü** (`glow`) eklendi. Parlak, beyaza yaklaşan çekirdek ve ince kenar ayrıntısını yalnız seçili damarlar taşır:
+- ana turkuaz-yeşil gövde (referanstaki ışıyan bölge);
+- altın, şafak, fuşya ve sol kol bölgeleri daha az;
+- arka plandaki geniş mavi hacimler neredeyse hiç.
+
+Ortak dünya gaz alanı, damar ölçekleri, dünya konumları, paralaks, yakın tül katmanları, kademeler ve 4 kanallı gürültü dokusu korundu. Parça başına doku okuması yüksek kademede 9’dan 7’ye indi (aşağıda, performans). Özel hazırlanmış bulutsu dokusu kullanılmadı; gerekirse sonraki adım olarak mevcut 3B katmanlarla birlikte eklenebilir.
+
+### B. Çakışan dialog istekleri
+
+Hata yeniden üretildi (`scripts/race.mjs`, düzeltmeden önce **8 KALDI**):
+- Anı dialogu 320 ms gecikmeyle açılıyordu.
+- Başlık yalnız uçuşta kilitleniyordu ve liste ayrı bir `useState` ile açılıyordu.
+- Yıldıza dokunup hemen “Anılarımız”a basınca liste açılıyor, ardından gecikmeli anı da açılıyordu. Ekranda iki dialog kalıyor ve Escape/odak bozuluyordu.
+
+Düzeltme:
+- **Liste reducer’a taşındı.** Anı, mektup ve liste aynı durumda, birbirini dışlayan alanlar:
+  - `openList` açık ya da açılmayı bekleyen anının ve mektubun yerini alır;
+  - `openLetter` listeyi ve bekleyen anıyı kapatır;
+  - `travel` hepsini kapatır;
+  - liste veya mektup açıkken `touchStar`/`openDetail` yok sayılır;
+  - uçuşta liste açılmaz.
+- **Bekleyen açılış iptal edilebilir.** Gecikme sırasında `open` false olursa zamanlayıcı temizlenir. Bu, liste, mektup, yolculuk veya ana sayfa geçişinde olur. Bekleme sırasında Escape açılışı iptal eder; dialog açılınca Escape yeniden tarayıcıya geçer, kapanış animasyonu korunur.
+- **Son güvenlik:** zamanlayıcı dolduğunda başka bir dialog açıksa istek düşer ve durum kapatılır.
+
+Testler:
+- `state.test.ts` **tek dialog kuralı** bölümü 5 test ekler:
+  - dokunuş + liste;
+  - liste açıkken dokunuş;
+  - mektup/liste geçişi;
+  - yolculuk;
+  - 200 rastgele giriş dizisinin her adımında en çok bir dialog.
+- `pnpm dogrula:dialog` (`scripts/race.mjs`) gerçek fare ve klavye girdisiyle, açık dialog sayısını her animasyon karesinde izleyerek şu senaryoları dener:
+  - dokunuş + hemen liste / yolculuk / genel görünüm / Escape;
+  - liste açıkken yıldız hedefi;
+  - hızlı giriş dizisi;
+  - hareket azaltmada Enter/Escape ve odak dönüşü.
+
+### Bu turun doğrulamaları
+
+Aynı ortam: Windows 11, AMD Renoir entegre GPU, ANGLE/D3D11, Chrome headless gerçek GPU yolu, üretim derlemesi.
+
+- **Temel kontroller:** `pnpm typecheck` ✔ · `pnpm test` ✔ **146/146** (7 dosya) · `pnpm build` ✔ · `node scripts/check.mjs --hata-yolu` → 1.
+- **Yeni dialog kontrolü:** `dogrula:dialog` **17/17**. Düzeltmeden önce aynı betik **9 geçti, 8 kaldı**: iki dialog aynı anda açık kalıyordu (`memory-dialog` + `list-dialog`).
+- **Diğer tarayıcı kontrolleri:**
+  - `dogrula:yildiz` **34/34**
+  - `dogrula:ekranlar` **156/156**
+  - `dogrula:etkilesim` **23/23** + klavye **10/10**
+  - `dogrula:mektup` **26/26**
+  - `dogrula:tur` 1→6, 3,1,6,2,5,4 ve 6,5,4,3,2,1 sıralarında geçti.
+- **Klavye betiğinde tespit ve düzeltme:** klavye betiği bu oturumda önce 3 kez **5 KALDI** ile 1 döndürdü. Varıştan hemen sonra Tab’a basıyordu; yıldız hedefi ise ilk projeksiyon karesine kadar ~130 ms gizli kalıyordu. Bugün GPU yavaş olduğundan bu süre uzamıştı.
+  - Betiğe varıştan sonra 400 ms bekleme eklendi; ardından üç tekrarda **10/10** geçti.
+  - Uygulama davranışı değişmedi: odak anı başlığında, sonraki Tab yıldız hedefinde.
+
+### Bulutsu revizyonunun performansı (2 Kasım, aynı cihaz)
+
+`scripts/perf.mjs`, sabit kademe, uçuş sırasında, dört uçuşun aralığı. **Bu oturumda GPU, 1 Kasım ölçümlerinden belirgin yavaştı.** Aynı c9449cb sürümü bugün 1440 yüksekte p50 19–34 ms verdi; 1 Kasım’da 14,5–19,4 ms’ydi. Bu yüzden karşılaştırma yalnız bu oturumda, iki sürüm sırayla çalıştırılarak yapıldı. 1 Kasım tablosuyla doğrudan karşılaştırılmamalıdır.
+
+| Görünüm | Kademe | c9449cb p50 | revizyon p50 | c9449cb p95 | revizyon p95 |
+|---|---|---:|---:|---:|---:|
+| 1440×900 | yüksek | 19,4–31,5 ms | 20,1–30,1 ms | 26–40 ms | 27,3–43,6 ms |
+| 1440×900 | düşük | 13,4–14,8 ms | 13,3–16,3 ms | 17,6–23,2 ms | 14,5–23,8 ms |
+| 1920×1080 | yüksek | 26,8–50,4 ms | 26,8–46 ms | 38–119 ms | 35–55 ms |
+| 1920×1080 | orta | 18,7–27,6 ms | 18,8–38 ms | 27–46 ms | 25,5–57 ms |
+| 390×844 emülasyon | orta / 1,35 | 13,3 ms | 13,3–13,5 ms | 13,8–13,9 ms | 13,7–20,6 ms |
+| 390×844 emülasyon | düşük / 1 | 13,3 ms | 13,3 ms | 13,6–13,8 ms | 13,7–13,8 ms |
+
+İlk revizyon (5/4 oktav) yüksek ve orta kademede c9449cb’den ağırdı: 1440 yüksek p50 22–42 ms. Sebep, yumuşak ve geniş gövdelerin daha az parçayı erken atmasıydı. Ayrıntı artık ayrı bir kenar katmanından geldiği için iki değişiklik yapıldı:
+- gövde fbm’i yüksek kademede 4, ortada 3 oktava indi;
+- görünmeyecek kadar sönük kesitler gürültüden önce atılıyor.
+
+Görüntü değişmedi. Sonuç:
+- **1440 yüksek:** c9449cb ile aynı aralıkta.
+- **1920 orta:** altına uçuşta daha ağır (p50 38 / 27,6 ms), diğer uçuşlarda eşit.
+- **1920 yüksek:** bu entegre GPU’da iki sürümde de sürdürülemiyor; kalite yöneticisi kademeyi indiriyor.
+- **Telefon emülasyonu:** iki kademede de tabanda.
+
+Gerçek telefon ölçümü yapılmadı.
+
+### Görsel kabul malzemesi (bu tur)
+
+`docs/ekranlar-bulutsu-revizyon/`:
+
+- `dortlu-referans-acilis.jpg`, `dortlu-referans-ucus.jpg`:
+  - sol üst: Google referansı (tarayıcı çubuğu kırpıldı);
+  - sağ üst: 5d412ab;
+  - sol alt: c9449cb;
+  - sağ alt: **revizyon**.
+  - 1440×900 açılış ve ikiliye uçuşun ortası. Kadrajlar 16:9’a kırpıldı.
+- `uclu-masaustu-<1..6>.jpg`, `uclu-telefon-<1..6>.jpg`: soldan sağa **5d412ab · c9449cb · revizyon**.
+  - Kareler aynı betik ve adımlarla çekildi: açılış, altına uçuş ortası, altın varış, ikiliye uçuş ortası, ikili varış, genel görünüm.
+  - Masaüstü yüksek kademededir. Telefon 390×844 emülasyonu, orta kademededir; gerçek telefonlar da ortadan başlar.
+  - 5d412ab’de kademe sabitleme yoktu; orada kalite yöneticisinin seçtiği kademe kullanıldı.
+  - Açılış ve genel görünüm, takımyıldız Y’ye geçtiği için 5d412ab’de farklı kadrajdadır.
+- `revizyon-masaustu-acilis.jpg`, `revizyon-telefon-acilis.jpg`: revizyonun tam boy açılış kareleri.
+
+**Bu yön, Hazret’in görsel kabulü gelene kadar tamamlanmış sayılmaz.** Kabul edilmezse ayarlanabilecek başlıca değişkenler: ana turkuaz-yeşil gövdenin parlaklığı ve kapladığı alan, ince kenar ayrıntısının miktarı, mavi ile mor/fuşya dengesi ve toz yoğunluğu. Gerekirse bunların yanına özel hazırlanmış bulutsu dokuları da eklenebilir.
+
+## Önceki tur: Y sürümü (c9449cb, Claude, 1 Kasım 2026)
+
+Aşağıdaki bulutsu tablosu c9449cb’nin değişikliklerini anlatır. Ortak dünya gaz alanı ve derinlik altyapısı korundu; görsel parametreleri 2 Kasım revizyonunda yeniden düzenlendi (yukarıda).
 
 ### 1. Bulutsu: sütlü/pastel bulanıklığın gerçek nedenleri
 
@@ -108,7 +227,7 @@ Yüzeyde kısa ışık tepkisi ve kontrollü korona genişlemesi → yüzeyden y
 - Hata yolu gerçekten doğrulandı: `node scripts/check.mjs --hata-yolu` 1 döndürür; ayrıca geliştirme sırasında `dogrula:etkilesim` ve `dogrula:mektup` gerçek birer başarısızlıkta 1 ile bitti (aşağıda).
 - GitHub Actions temel CI eklendi (yukarıda). Diğer düzeltmeler: ilk çizim ile resize dinleyicisi arasında kaçan boyut değişimi; açılış metninin etiket yerleştirmede engel sayılmaması.
 
-## Doğrulananlar (bu sürüm)
+## Doğrulananlar (c9449cb, 1 Kasım)
 
 Ortam: Windows 11, AMD Radeon entegre GPU (Renoir, ANGLE/Direct3D11), Chrome headless gerçek GPU yolu, üretim derlemesi (`pnpm build` + `pnpm preview`). Canvas `data-renderer="webgl2"`. Ekran 75 Hz olduğundan **13,3 ms tabandır**.
 
@@ -120,7 +239,7 @@ Ortam: Windows 11, AMD Radeon entegre GPU (Renoir, ANGLE/Direct3D11), Chrome hea
 - Gizli sekme kontrolü (“gizliyken uçuş ≤ %2 ilerledi”) zamanlamaya duyarlı: bir çalıştırmada %2,03 ile **KALDI** ve komut 1 ile bitti; iki tekrarda %1,2 ve %0,6 ile geçti. İlerleme sekme gizlenene kadar geçen birkaç kareden geliyor; gizliyken uçuş duruyor. Eşik değiştirilmedi.
 - Geliştirme sırasında `dogrula:mektup` 4 KALDI ile 1 döndürdü (betik, yıldız hedefi ilk karede konumlanmadan odaklanıyordu; betik düzeltildi, uygulama davranışı doğru).
 
-### Ölçülen performans — bu sürüm (yeni bulutsu)
+### Ölçülen performans — c9449cb (1 Kasım oturumu)
 
 `scripts/perf.mjs`, sabit kademe (`?olcum&kademe=…`), uçuş sırasında, dört uçuşun aralığı. GPU kaynakları sabit kaldı (12–13 geometri; 20/16/12 doku; 13–14 program; tur boyunca yalnız açılan Y kenarları kadar geometri artışı).
 
@@ -145,7 +264,7 @@ Sonuç: yeni bulutsu bu entegre GPU’da yüksek kademede 1440’ta p50’yi ~1�
 
 ## Görsel kabul malzemesi
 
-`docs/ekranlar-y-surumu/`:
+Bu turun malzemesi yukarıda (“Görsel kabul malzemesi (bu tur)”). 1 Kasım (c9449cb) malzemesi, `docs/ekranlar-y-surumu/`:
 
 - `once-sonra-<masaustu|telefon>-<1..6>.jpg`: aynı betik, aynı GPU ve aynı adımlarla **solda önceki sürüm (5d412ab), sağda bu sürüm**: açılış, altına uçuşun ortası, altın varış, ikiliye uçuşun ortası, ikili varış, genel görünüm. Açılış ve genel görünüm kareleri Y düzeni nedeniyle bilerek farklı kadrajdadır; varış kareleri aynı yıldız kadrajındadır. “Sonra” kareleri, kalite yöneticisinin o çekimde seçtiği **orta** kademededir.
 - `v-*`: 360×740 açılış ve Y, 430×932 ipucu ve anı kartı, 844×390 ipucu ve Y, 1440×900 ipucu ve anı kartı, 1920×1080 Y; `s-*`: yıldıza dokunarak açılan anı (masaüstü ve telefon).
@@ -174,7 +293,7 @@ Gerçek anılar, fotoğraflar ve mektup gelmedi; bu bölüm tamamlanmış sayıl
 
 ### Görsel kabul bekleyenler
 
-Bulutsu yoğunluğu ve renk dengesi, toz şeritlerinin miktarı, parıltılı yıldız sayısı, ipucunun konumu ve dili, anı geçişinin süresi, Y’nin biçimi (özellikle kol açıları ve telefondaki boyutu). Bilinen: R3F kaynaklı `THREE.Clock` kullanım dışı uyarısı sürüyor.
+**2 Kasım bulutsu revizyonu** (`docs/ekranlar-bulutsu-revizyon/`): açılış/genel görünüm yönü onaylanana kadar tamamlanmış sayılmaz. Ayrıca: toz miktarı, parıltılı yıldız sayısı, ipucunun konumu ve dili, anı geçişinin süresi, Y’nin biçimi (özellikle kol açıları ve telefondaki boyutu). Bilinen: R3F kaynaklı `THREE.Clock` kullanım dışı uyarısı sürüyor.
 
 ---
 

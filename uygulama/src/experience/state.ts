@@ -14,8 +14,10 @@ export interface ExperienceState {
   current: StarId | null;
   flight: Flight | null;
   visited: StarId[];
+  /** Dialoglar birbirini dışlar: anı, mektup ve liste aynı anda açık olamaz. */
   detailOpen: boolean;
   letterOpen: boolean;
+  listOpen: boolean;
   nextFlightId: number;
   /** Bulunulan yıldıza getiren uçuşun kimliği; varıştan önce başlayan dokunuşları ayırt eder. */
   arrivalId: number;
@@ -35,6 +37,8 @@ export type ExperienceAction =
   | { type: 'closeDetail' }
   | { type: 'openLetter' }
   | { type: 'closeLetter' }
+  | { type: 'openList' }
+  | { type: 'closeList' }
   | { type: 'discoverFallback'; id: StarId };
 
 export const initialState: ExperienceState = {
@@ -44,6 +48,7 @@ export const initialState: ExperienceState = {
   visited: [],
   detailOpen: false,
   letterOpen: false,
+  listOpen: false,
   nextFlightId: 1,
   arrivalId: 0,
   opened: [],
@@ -60,15 +65,16 @@ function travel(state: ExperienceState, to: Destination): ExperienceState {
     phase: 'travelling',
     detailOpen: false,
     letterOpen: false,
+    listOpen: false,
     flight: { id: state.nextFlightId, to },
     nextFlightId: state.nextFlightId + 1,
   };
 }
 
 function openDetail(state: ExperienceState): ExperienceState {
-  if (state.phase !== 'arrived' || !state.current || state.detailOpen) return state;
+  if (state.phase !== 'arrived' || !state.current || state.detailOpen || state.letterOpen || state.listOpen) return state;
   const opened = state.opened.includes(state.current) ? state.opened : [...state.opened, state.current];
-  return { ...state, detailOpen: true, letterOpen: false, opened };
+  return { ...state, detailOpen: true, opened };
 }
 
 export function experienceReducer(state: ExperienceState, action: ExperienceAction): ExperienceState {
@@ -90,7 +96,7 @@ export function experienceReducer(state: ExperienceState, action: ExperienceActi
       return openDetail(state);
     case 'touchStar': {
       // Uçuş sırasında ya da bir dialog açıkken yıldız dokunuşları yok sayılır.
-      if (state.flight || state.detailOpen || state.letterOpen) return state;
+      if (state.flight || state.detailOpen || state.letterOpen || state.listOpen) return state;
       if (state.phase === 'arrived' && action.id === state.current) {
         // Yolculuğu başlatan dokunuş, varışta anıyı da açmaz: dokunuş bu varıştan sonra başlamış olmalı.
         if (action.arrival !== state.arrivalId) return state;
@@ -102,14 +108,21 @@ export function experienceReducer(state: ExperienceState, action: ExperienceActi
     case 'closeDetail':
       return state.detailOpen ? { ...state, detailOpen: false } : state;
     case 'openLetter':
+      // Liste ya da (henüz açılmayı bekleyen) anı yerini mektuba bırakır.
       if (state.flight || !isComplete(state.visited)) return state;
-      return { ...state, detailOpen: false, letterOpen: true };
+      return { ...state, detailOpen: false, listOpen: false, letterOpen: true };
     case 'closeLetter':
       return state.letterOpen ? { ...state, letterOpen: false } : state;
+    case 'openList':
+      // Liste, açık ya da açılmayı bekleyen anının ve mektubun yerini alır.
+      if (state.flight || state.listOpen) return state;
+      return { ...state, detailOpen: false, letterOpen: false, listOpen: true };
+    case 'closeList':
+      return state.listOpen ? { ...state, listOpen: false } : state;
     case 'discoverFallback': {
       // WebGL olmadığında anıyı okuyarak aynı hikâye tamamlanabilir.
       const visited = state.visited.includes(action.id) ? state.visited : [...state.visited, action.id];
-      return { ...state, phase: 'arrived', current: action.id, flight: null, detailOpen: false, letterOpen: false, visited };
+      return { ...state, phase: 'arrived', current: action.id, flight: null, detailOpen: false, letterOpen: false, listOpen: false, visited };
     }
   }
 }

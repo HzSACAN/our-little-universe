@@ -31,6 +31,7 @@ attribute vec3 aCore;
 attribute vec3 aEdge;
 attribute vec4 aParams;
 attribute vec3 aTangent;
+attribute float aGlow;
 varying vec2 vUv;
 varying vec3 vWorld;
 varying vec3 vCore;
@@ -39,6 +40,7 @@ varying float vIntensity;
 varying float vSeed;
 varying float vScale;
 varying float vField;
+varying float vGlow;
 void main(){
   vec3 camRight=vec3(viewMatrix[0][0],viewMatrix[1][0],viewMatrix[2][0]);
   vec3 camUp=vec3(viewMatrix[0][1],viewMatrix[1][1],viewMatrix[2][1]);
@@ -57,6 +59,7 @@ void main(){
   vSeed=aParams.y;
   vScale=aSize;
   vField=aParams.w;
+  vGlow=aGlow;
   float dist=distance(cameraPosition,aCenter);
   // Kamera parçacığa girerken yumuşakça kaybolur: sis duvarı veya düzlem kenarı görünmez.
   float nearFade=smoothstep(aSize*.3,aSize*1.25,dist);
@@ -76,44 +79,46 @@ varying float vIntensity;
 varying float vSeed;
 varying float vScale;
 varying float vField;
+varying float vGlow;
 ${textureNoise(octaves)}
 void main(){
   float r=length(vUv);
-  if(r>.94) discard;
-  // Parçacık yalnızca gaz alanının görünür olduğu bölgeyi belirler (maske);
-  // desenin kendisi damar boyunca ortak, dünyaya bağlı bir hacimden gelir.
-  float mask=1.-smoothstep(.3,.94,r);
+  if(r>.9) discard;
+  // Parçacık, gaz alanının görünür olduğu yumuşak bir hacim kesitidir (maske);
+  // desenin kendisi damar boyunca ortak, dünyaya bağlı bir alandan gelir.
+  float mask=smoothstep(.94,.08,r);
   vec3 p=vWorld/vField+vec3(vSeed,vSeed*.37,-vSeed*.71);
   p+=vec3(uTime*.010,-uTime*.007,uTime*.005);
-  // Büyük ölçekli kapsama: damarın içinde de geniş, düzensiz koyu boşluklar açılır.
-  // Ucuz tek örnek; boş bölgede pahalı ayrıntı hiç hesaplanmaz.
-  vec4 macro=tnoise4(p*.3+vec3(7.3,1.1,3.9));
-  float cover=smoothstep(-.12,.42,macro.r);
-  if(cover*mask<.015) discard;
-  // Alan bükümü: düz bulutlar yerine kıvrımlı, akışkan yapılar.
-  vec3 q=p+tnoise4(p*.6+vec3(1.7,9.2,3.1)).xyz*1.1;
+  // Tek örnekte dört geniş ölçekli alan: kapsama (r), yoğunlaşma (g), renk bölgesi (b), toz (a).
+  vec4 macro=tnoise4(p*.28+vec3(7.3,1.1,3.9));
+  // Kapsama yumuşak: boşluklar keskin yarık değil, gazın incelip koyulaştığı bölgeler.
+  float cover=smoothstep(-.5,.55,macro.r);
+  // Katkısı görünmeyecek kadar küçük kesitlerde pahalı gürültü hiç hesaplanmaz.
+  if(cover*mask*vIntensity<.012) discard;
+  // Hafif alan bükümü: kıvrım değil, akışkan ve bütünlüklü gövdeler.
+  vec3 q=p+tnoise4(p*.45+vec3(1.7,9.2,3.1)).xyz*.65;
   float n=tfbm(q)*.5+.5;
-  // Büyük şeklin içindeki ışıyan çekirdek: geniş, yumuşak ama yalnız yoğun bölgelerde.
-  float broad=smoothstep(.05,.65,macro.g)*cover*cover;
-  // Düzensiz koyu boşluklar: alan zayıfsa bu kesit hiç katkı vermez.
-  if(n<.34&&broad<.04) discard;
-  // Geniş gaz gövdesi, içinde orta ölçekli kümeler.
-  float body=smoothstep(.5,.84,n);
-  // İnce, kıvrımlı ve keskin ışıklı filamentler: iki ölçekte sırt gürültüsü.
-  vec4 mid=tnoise4(q*1.7+vec3(3.7,-1.2,.4));
-  float ridgeA=1.-abs(mid.r);
-  float ridgeB=1.-abs(tnoise(q*3.4+vec3(-2.1,4.4,.3)));
-  float fil=(pow(ridgeA,10.)*.9+pow(ridgeB,16.)*.4)*smoothstep(.4,.68,n);
-  // Koyu toz şeritleri: ayrı bir sırt alanı gazı keser ve arkadaki gökyüzünü karartır.
-  float dustRidge=1.-abs(mid.g);
-  float dust=smoothstep(.86,.975,dustRidge)*smoothstep(.42,.64,n);
-  // Gövdenin yoğun bölgeleri daha parlak: büyük şeklin içinde ışıyan çekirdekler.
-  float emission=((body*.6+body*body*1.1+fil*1.3)*cover+broad*.75*smoothstep(.22,.6,n))*(1.-dust*.85)*mask*1.45;
-  vec3 col=mix(vEdge,vCore,smoothstep(.52,.86,n));
-  // Filamentler çekirdek renginin daha açık, ama beyaz olmayan tonu.
-  col=mix(col,vCore*1.2+vec3(.06),clamp(fil*.7,0.,1.));
-  col=mix(col,vCore,broad*.35);
-  gl_FragColor=vec4(col*emission*vIntensity,dust*mask*cover*vIntensity*2.6);
+  // 1) Geniş gövde: düşük eşik, yarı saydam; orta ölçekli doku fbm'den gelir.
+  float body=smoothstep(.34,.84,n);
+  // 2) Yoğunlaşma: geniş gövdenin içinde yalnız seçili bölgelerde ışıyan çekirdek.
+  float dense=smoothstep(.15,.7,macro.g)*vGlow;
+  float knot=dense*smoothstep(.56,.84,n);
+  // 3) İnce ayrıntı: yalnız gövdenin parlak kenar bandında ve yoğunlaşma noktalarında,
+  // yüksek frekanslı ve çok ince; görüntünün geri kalanı yumuşak kalır.
+  float rim=smoothstep(.54,.64,n)*(1.-smoothstep(.68,.84,n));
+  float ridge=1.-abs(tnoise(q*3.8+vec3(-2.1,4.4,.3)));
+  float fil=pow(ridge,18.)*rim*dense;
+  // Yumuşak toz: düşük frekanslı, gazın içinde koyulaşan bölgeler; çekirdekleri örtmez.
+  float dust=smoothstep(.1,.75,macro.a)*smoothstep(.4,.72,n)*(1.-knot)*.6;
+  float emission=(body*.36+body*body*.7+knot*1.4+fil*1.2)*cover*mask*(1.-dust*.55);
+  // Renk: kenar rengi (çoğunlukla mavi/lacivert) her yerde; vurgu rengi yalnız
+  // yoğun kısımlarda ve bölgesel bir alanda öne çıkar.
+  // Güçlü yoğunlaşmalı damarlarda (ör. ana turkuaz-yeşil gövde) vurgu rengi daha sürekli.
+  float accent=clamp(smoothstep(-.25,.45,macro.b)+vGlow*.45-.3,0.,1.);
+  vec3 col=mix(vEdge,vCore,smoothstep(.46,.84,n)*mix(.2,1.,accent));
+  // Çekirdek ve ince kenarlar çekirdek renginin açık, beyaza yaklaşan tonu.
+  col=mix(col,mix(vCore,vec3(.95,.97,1.),.4),clamp(knot*.55+fil*.6,0.,1.));
+  gl_FragColor=vec4(col*emission*vIntensity*1.85,dust*mask*cover*vIntensity*1.1);
 }
 `;
 
@@ -132,21 +137,20 @@ uniform float uSharpen;
 varying vec2 vUv;
 void main(){
   vec4 c=texture2D(uMap,vUv);
-  // Düşük çözünürlüklü ara hedeften büyütmenin yumuşattığı ayrıntıyı geri kazanmak
-  // için hafif keskinleştirme (dört komşu örnek).
+  // Büyütmenin yumuşattığı ayrıntı yalnız parlak bölgelerde geri kazanılır (dört komşu
+  // örnek); geniş, sönük gaz gövdesi yumuşak kalır.
   vec4 blur=(texture2D(uMap,vUv+vec2(uTexel.x,0.))+texture2D(uMap,vUv-vec2(uTexel.x,0.))
     +texture2D(uMap,vUv+vec2(0.,uTexel.y))+texture2D(uMap,vUv-vec2(0.,uTexel.y)))*.25;
-  c=max(c+(c-blur)*uSharpen,0.);
-  float absorb=1.-exp(-c.a*1.4);
-  vec3 e=c.rgb*(1.-absorb*.5);
+  float lit=smoothstep(.12,.45,max(max(c.r,c.g),c.b));
+  c=max(c+(c-blur)*uSharpen*lit,0.);
+  float absorb=1.-exp(-c.a*1.2);
+  vec3 e=c.rgb*(1.-absorb*.35);
   // Renk korumalı yumuşak sıkıştırma: yoğun bölgeler beyaza patlamaz ve bloom
   // eşiğinin altında kalır; bulutsu ayrıntısı ışıma altında kaybolmaz.
   float m=max(max(e.r,e.g),e.b);
   float k=.9*(1.-exp(-m/.9));
   e*=k/max(m,1e-4);
-  float l=dot(e,vec3(.2126,.7152,.0722));
-  e=max(mix(vec3(l),e,1.12),0.);
-  gl_FragColor=vec4(e,absorb);
+  gl_FragColor=vec4(e,absorb*.8);
 }
 `;
 
@@ -181,6 +185,7 @@ export function Nebula({ share, octaves, resolution, sharpen, bridge }: NebulaPr
     geo.setAttribute('aEdge', new InstancedBufferAttribute(data.edges, 3));
     geo.setAttribute('aParams', new InstancedBufferAttribute(data.params, 4));
     geo.setAttribute('aTangent', new InstancedBufferAttribute(data.tangents, 3));
+    geo.setAttribute('aGlow', new InstancedBufferAttribute(data.glows, 1));
     geo.instanceCount = data.count;
     const mat = new ShaderMaterial({
       uniforms: { uTime: { value: 0 }, uNoise: { value: noiseTexture() } },

@@ -31,7 +31,6 @@ export default function App() {
   const [status, setStatus] = useState<SkyStatus>(() => (detectWebGL() ? 'ok' : 'unsupported'));
   const [sceneKey, setSceneKey] = useState(0);
   const [tier, setTier] = useState<QualityTier>(initialTier);
-  const [listOpen, setListOpen] = useState(false);
   const [bridge] = useState(() => createBridge(reducedMotion));
   const stageRef = useRef<HTMLDivElement>(null);
   const arrivalTitle = useRef<HTMLHeadingElement>(null);
@@ -42,7 +41,7 @@ export default function App() {
   const travelling = state.phase === 'travelling';
   const started = state.phase !== 'intro';
   const complete = isComplete(state.visited);
-  const openLetter = () => { setListOpen(false); dispatch({ type: 'openLetter' }); };
+  const openLetter = () => dispatch({ type: 'openLetter' });
   const starTarget = useCallback(() => bridge.starTarget, [bridge]);
   const letterDialog = (
     <LetterDialog open={complete && state.letterOpen} onClose={() => dispatch({ type: 'closeLetter' })} returnFocus={starTarget} />
@@ -150,7 +149,7 @@ export default function App() {
               bridge={bridge}
               tier={tier}
               running={visible}
-              interactive={!travelling && !listOpen && !state.detailOpen && !state.letterOpen}
+              interactive={!travelling && !state.listOpen && !state.detailOpen && !state.letterOpen}
               onArrive={onArrive}
               onSelect={tapStar}
               onContextLost={onContextLost}
@@ -169,7 +168,7 @@ export default function App() {
         locked={travelling}
         reducedMotion={reducedMotion}
         onHome={() => travel('home')}
-        onList={() => setListOpen(true)}
+        onList={() => dispatch({ type: 'openList' })}
         onToggleMotion={() => setReducedMotion(!reducedMotion)}
       />
 
@@ -221,11 +220,11 @@ export default function App() {
       />
       {letterDialog}
       <ListDialog
-        open={listOpen}
+        open={state.listOpen}
         visited={state.visited}
-        onClose={() => setListOpen(false)}
+        onClose={() => dispatch({ type: 'closeList' })}
         onPick={(id) => {
-          setListOpen(false);
+          dispatch({ type: 'closeList' });
           travel(id);
         }}
       />

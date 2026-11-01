@@ -151,3 +151,59 @@ describe('mektup ve alternatif okuma akışı', () => {
     expect(experienceReducer(opened, { type: 'travel', to: 'home' }).letterOpen).toBe(false);
   });
 });
+
+describe('tek dialog kuralı', () => {
+  const order = ['gold', 'binary', 'rose', 'azure', 'violet', 'dawn'] as const;
+  const dialogs = (s: ExperienceState) => [s.detailOpen, s.letterOpen, s.listOpen].filter(Boolean).length;
+  const arrived = (visited: readonly (typeof order)[number][] = ['gold']): ExperienceState => ({
+    ...initialState, phase: 'arrived', current: 'gold', visited: [...visited], arrivalId: 1, nextFlightId: 2,
+  });
+
+  it('yıldıza dokunulduktan hemen sonra açılan liste, bekleyen anı açılışının yerini alır', () => {
+    const touched = run([{ type: 'touchStar', id: 'gold', arrival: 1 }], arrived());
+    expect(touched.detailOpen).toBe(true);
+    const list = run([{ type: 'openList' }], touched);
+    expect(list.listOpen).toBe(true);
+    expect(list.detailOpen).toBe(false);
+    expect(dialogs(list)).toBe(1);
+  });
+
+  it('liste açıkken yıldız dokunuşu ve anı isteği yok sayılır', () => {
+    const list = run([{ type: 'openList' }], arrived());
+    expect(run([{ type: 'touchStar', id: 'gold', arrival: 1 }, { type: 'openDetail' }], list)).toBe(list);
+    expect(run([{ type: 'closeList' }, { type: 'touchStar', id: 'gold', arrival: 1 }], list).detailOpen).toBe(true);
+  });
+
+  it('mektup, açık ya da bekleyen anıyı ve listeyi kapatır; mektup açıkken liste mektubun yerini alır', () => {
+    const complete = arrived(order);
+    const letter = run([{ type: 'touchStar', id: 'gold', arrival: 1 }, { type: 'openList' }, { type: 'openLetter' }], complete);
+    expect([letter.letterOpen, dialogs(letter)]).toEqual([true, 1]);
+    const list = run([{ type: 'openList' }], letter);
+    expect([list.listOpen, dialogs(list)]).toEqual([true, 1]);
+  });
+
+  it('yolculuk her dialogu ve bekleyen anıyı kapatır; uçuşta liste açılmaz', () => {
+    const flying = run([{ type: 'touchStar', id: 'gold', arrival: 1 }, { type: 'travel', to: 'home' }], arrived());
+    expect([flying.phase, dialogs(flying)]).toEqual(['travelling', 0]);
+    expect(run([{ type: 'openList' }], flying)).toBe(flying);
+    const fromList = run([{ type: 'openList' }, { type: 'travel', to: 'binary' }], arrived());
+    expect([fromList.flight?.to, dialogs(fromList)]).toEqual(['binary', 0]);
+  });
+
+  it('rastgele giriş dizilerinde hiçbir adımda birden fazla dialog açık olmaz', () => {
+    const actions: Parameters<typeof experienceReducer>[1][] = [
+      { type: 'touchStar', id: 'gold', arrival: 1 }, { type: 'openList' }, { type: 'closeList' }, { type: 'openLetter' },
+      { type: 'closeLetter' }, { type: 'openDetail' }, { type: 'closeDetail' }, { type: 'travel', to: 'home' },
+    ];
+    let seed = 7;
+    const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    for (let run = 0; run < 200; run++) {
+      let s = arrived(order);
+      for (let i = 0; i < 30; i++) {
+        s = experienceReducer(s, actions[Math.floor(rand() * actions.length)]);
+        if (s.flight) s = experienceReducer(s, { type: 'arrive', flightId: s.flight.id });
+        expect(dialogs(s)).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+});
