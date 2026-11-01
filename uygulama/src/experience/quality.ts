@@ -15,6 +15,8 @@ export interface QualitySettings {
   multisampling: number;
   /** Bulutsu ara hedefinin çözünürlük oranı. */
   nebulaResolution: number;
+  /** Ara hedef büyütülürken uygulanan keskinleştirme. */
+  nebulaSharpen: number;
 }
 
 const settings: Record<QualityTier, QualitySettings> = {
@@ -29,7 +31,8 @@ const settings: Record<QualityTier, QualitySettings> = {
     skyOctaves: 5,
     bloomLevels: 8,
     multisampling: 2,
-    nebulaResolution: 0.6,
+    nebulaResolution: 0.7,
+    nebulaSharpen: 0.5,
   },
   medium: {
     tier: 'medium',
@@ -42,7 +45,8 @@ const settings: Record<QualityTier, QualitySettings> = {
     skyOctaves: 5,
     bloomLevels: 6,
     multisampling: 0,
-    nebulaResolution: 0.5,
+    nebulaResolution: 0.65,
+    nebulaSharpen: 0.55,
   },
   low: {
     tier: 'low',
@@ -55,14 +59,25 @@ const settings: Record<QualityTier, QualitySettings> = {
     skyOctaves: 5,
     bloomLevels: 4,
     multisampling: 0,
-    nebulaResolution: 0.34,
+    nebulaResolution: 0.5,
+    nebulaSharpen: 0.6,
   },
 };
 
 export const qualitySettings = (tier: QualityTier) => settings[tier];
 
+/** Ölçüm için sabit kademe: `?olcum&kademe=high|medium|low`; kalite yöneticisi o zaman devreye girmez. */
+export function forcedTier(): QualityTier | null {
+  if (typeof window === 'undefined') return null;
+  const params = new URLSearchParams(window.location.search);
+  const tier = params.get('kademe');
+  return params.has('olcum') && (tier === 'high' || tier === 'medium' || tier === 'low') ? tier : null;
+}
+
 export function initialTier(): QualityTier {
   if (typeof window === 'undefined') return 'high';
+  const forced = forcedTier();
+  if (forced) return forced;
   const coarse = window.matchMedia('(pointer: coarse)').matches;
   const small = Math.min(window.innerWidth, window.innerHeight) < 600;
   return coarse || small ? 'medium' : 'high';

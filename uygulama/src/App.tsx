@@ -1,14 +1,16 @@
 import { Component, lazy, Suspense, useCallback, useEffect, useReducer, useRef, useState, type ReactNode } from 'react';
 import { isComplete, memories, memoryById, nextUnvisited } from './content/memories';
 import { experienceReducer, initialState, type Destination } from './experience/state';
+import type { StarId } from './content/memories';
 import { createBridge } from './experience/bridge';
-import { detectWebGL, useDocumentVisible, useLayout, useLookControls, useReducedMotion } from './experience/hooks';
+import { detectWebGL, useCoarsePointer, useDocumentVisible, useLayout, useLookControls, useReducedMotion, useTapGuard } from './experience/hooks';
 import { initialTier, lowerTier, type QualityTier } from './experience/quality';
 import { Header } from './ui/Header';
 import { StarLabels } from './ui/StarLabels';
 import { ArrivalPanel, CompletionPanel, ExploreCaption, FlightStatus, Footer, Intro, Navigation } from './ui/Panels';
 import { LetterDialog, ListDialog, MemoryDialog } from './ui/Dialogs';
 import { Fallback } from './ui/Fallback';
+import { StarTarget } from './ui/StarTarget';
 
 const Scene = lazy(() => import('./experience/Scene').then((m) => ({ default: m.Scene })));
 
@@ -24,6 +26,7 @@ export default function App() {
   const [state, dispatch] = useReducer(experienceReducer, initialState);
   const [reducedMotion, setReducedMotion] = useReducedMotion();
   const layout = useLayout();
+  const coarse = useCoarsePointer();
   const visible = useDocumentVisible();
   const [status, setStatus] = useState<SkyStatus>(() => (detectWebGL() ? 'ok' : 'unsupported'));
   const [sceneKey, setSceneKey] = useState(0);
@@ -32,15 +35,33 @@ export default function App() {
   const [bridge] = useState(() => createBridge(reducedMotion));
   const stageRef = useRef<HTMLDivElement>(null);
   const arrivalTitle = useRef<HTMLHeadingElement>(null);
+  const arrivalRef = useRef(state.arrivalId);
+  arrivalRef.current = state.arrivalId;
+  const tapGuard = useTapGuard(arrivalRef);
 
   const travelling = state.phase === 'travelling';
   const started = state.phase !== 'intro';
   const complete = isComplete(state.visited);
   const openLetter = () => { setListOpen(false); dispatch({ type: 'openLetter' }); };
-  const letterDialog = <LetterDialog open={complete && state.letterOpen} onClose={() => dispatch({ type: 'closeLetter' })} />;
+  const starTarget = useCallback(() => bridge.starTarget, [bridge]);
+  const letterDialog = (
+    <LetterDialog open={complete && state.letterOpen} onClose={() => dispatch({ type: 'closeLetter' })} returnFocus={starTarget} />
+  );
 
   bridge.reducedMotion = reducedMotion;
   bridge.current = travelling ? null : state.current;
+  // Anısı henüz açılmamış yıldız, ince bir ışık halkasıyla dokunulabilir olduğunu sezdirir.
+  bridge.fx.invite =
+    state.phase === 'arrived' && !!state.current && !state.opened.includes(state.current) && !state.detailOpen;
+
+  // Anı açılırken: yüzeyde kısa ışık tepkisi ve yayılan dalga; bakış yıldıza geri yerleşir
+  // ki kapanınca aynı kadraja dönülsün.
+  useEffect(() => {
+    if (!state.detailOpen) return;
+    bridge.fx.flareAt = performance.now();
+    bridge.look.yaw = 0;
+    bridge.look.pitch = 0;
+  }, [state.detailOpen, bridge]);
 
   useEffect(() => {
     document.body.classList.toggle('motion-reduced', reducedMotion);
@@ -53,6 +74,15 @@ export default function App() {
   useLookControls(stageRef, bridge, status === 'ok');
 
   const travel = useCallback((to: Destination) => dispatch({ type: 'travel', to }), []);
+  // Yıldıza dokunma (kanvas, etiket ya da erişilebilir hedef): uzak yıldıza yolculuk,
+  // bulunulan yıldızda anı. Sürükleme, iptal ve çoklu dokunma burada elenir.
+  const tapStar = useCallback(
+    (id: StarId, fromKeyboard = false) => {
+      const arrival = tapGuard.claim(fromKeyboard, arrivalRef.current);
+      if (arrival !== null) dispatch({ type: 'touchStar', id, arrival });
+    },
+    [tapGuard],
+  );
   const onArrive = useCallback((flightId: number) => dispatch({ type: 'arrive', flightId }), []);
   const onContextLost = useCallback(() => setStatus('lost'), []);
   const onSlow = useCallback(() => setTier((t) => lowerTier(t)), []);
@@ -107,7 +137,7 @@ export default function App() {
   }
 
   return (
-    <div className={`app phase-${state.phase}`}>
+    <div className={`app phase-${state.phase}${state.detailOpen ? ' memory-open' : ''}`}>
       <div className="stage" ref={stageRef}>
         <SceneBoundary onError={() => setStatus('error')}>
           <Suspense fallback={<div className="stage-loading" aria-hidden="true" />}>
@@ -122,7 +152,7 @@ export default function App() {
               running={visible}
               interactive={!travelling && !listOpen && !state.detailOpen && !state.letterOpen}
               onArrive={onArrive}
-              onSelect={travel}
+              onSelect={tapStar}
               onContextLost={onContextLost}
               onSlow={onSlow}
             />
@@ -148,9 +178,19 @@ export default function App() {
         {state.phase === 'overview' && (complete ? <CompletionPanel onLetter={openLetter} /> : <ExploreCaption />)}
         {travelling && <FlightStatus label={destinationLabel} ref={(el) => void (bridge.progressBar = el)} />}
         {state.phase === 'arrived' && current && (
-          <ArrivalPanel memory={current} ref={arrivalTitle} complete={complete} onLetter={openLetter} onOpen={() => dispatch({ type: 'openDetail' })} />
+          <ArrivalPanel memory={current} ref={arrivalTitle} complete={complete} onLetter={openLetter} />
         )}
-        <StarLabels bridge={bridge} visited={state.visited} onSelect={travel} />
+        {state.phase === 'arrived' && current && (
+          <StarTarget
+            key={current.id}
+            memory={current}
+            bridge={bridge}
+            coarse={coarse}
+            invite={!state.opened.includes(current.id) && !state.detailOpen}
+            onTap={(fromKeyboard) => tapStar(current.id, fromKeyboard)}
+          />
+        )}
+        <StarLabels bridge={bridge} visited={state.visited} onSelect={tapStar} />
         {started && (
           <Navigation
             current={state.current}
@@ -171,6 +211,8 @@ export default function App() {
         open={state.detailOpen}
         onClose={() => dispatch({ type: 'closeDetail' })}
         nextLabel={complete ? 'Mektubunu aç' : 'Sıradaki yıldıza git'}
+        star={starTarget}
+        openDelay={reducedMotion ? 0 : 320}
         onNext={() => {
           dispatch({ type: 'closeDetail' });
           if (complete) openLetter();

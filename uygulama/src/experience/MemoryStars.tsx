@@ -7,6 +7,7 @@ import {
   Color,
   Group,
   PlaneGeometry,
+  Vector3,
   ShaderMaterial,
   SphereGeometry,
 } from 'three';
@@ -140,6 +141,11 @@ uniform float uStreamers;
 uniform float uReach;
 uniform float uStrength;
 uniform float uSize;
+// Etkileşim: davet halkası (0–1), hover/odak (0–1), açılış ışığı (0–1) ve dalganın ilerlemesi (0–1).
+uniform float uInvite;
+uniform float uHover;
+uniform float uFlare;
+uniform float uWave;
 varying vec2 vUv;
 ${simplexNoise3}
 void main(){
@@ -148,12 +154,25 @@ void main(){
   float a=atan(vUv.y,vUv.x);
   float x=d-1.;
   float inner=exp(-x*9.)*.9;
-  float glow=exp(-x/uReach);
+  // Anı açılırken korona kısa ve kontrollü biçimde genişler.
+  float glow=exp(-x/(uReach*(1.+uFlare*.55+uHover*.12)));
   float halo=exp(-x*.55)*.12;
   float n=snoise(vec3(cos(a)*2.4,sin(a)*2.4,x*.8-uTime*.04))*.5+.5;
   float m=snoise(vec3(cos(a)*6.,sin(a)*6.,x*1.6-uTime*.07+3.))*.5+.5;
   float streak=mix(1.,.35+1.25*pow(n,2.)*(.6+.6*m),uStreamers);
-  vec3 col=uColor*(inner+glow*streak*.55)+uOuter*halo;
+  vec3 col=uColor*(inner+glow*streak*.55*(1.+uFlare*.6+uHover*.18))+uOuter*halo;
+  // Yıldızın dokunulabilir olduğunu sezdiren ince, nefes alan ışık halkası.
+  float breathe=.5+.5*sin(uTime*1.7);
+  float ringR=1.34+.035*breathe;
+  float ring=exp(-pow((d-ringR)/.022,2.))*(uInvite*(.35+.4*breathe)+uHover*.55);
+  col+=mix(uColor,vec3(1.),.25)*ring*.75;
+  // Açılış: yüzeyden yayılan ince bir ışık dalgası; dalga boyunca seyrek kıvılcımlar.
+  if(uWave>0.&&uWave<1.){
+    float wr=1.08+uWave*3.1;
+    float wave=exp(-pow((d-wr)/(.03+uWave*.09),2.))*pow(1.-uWave,1.6);
+    float sparks=.35+.9*smoothstep(.45,.95,snoise(vec3(cos(a)*7.,sin(a)*7.,uWave*2.5+uTime*.1)));
+    col+=mix(uColor,vec3(1.),.3)*wave*sparks*1.25;
+  }
   float edge=1.-smoothstep(.7,1.,length(vUv)/uSize);
   gl_FragColor=vec4(col*uStrength*edge,1.);
 }
@@ -253,6 +272,10 @@ function makeCorona(look: StarLook, radius: number) {
       uStreamers: { value: c.streamers },
       uReach: { value: c.reach },
       uStrength: { value: 1 },
+      uInvite: { value: 0 },
+      uHover: { value: 0 },
+      uFlare: { value: 0 },
+      uWave: { value: 0 },
     },
     vertexShader: coronaVertex,
     fragmentShader: coronaFragment,
@@ -309,23 +332,53 @@ export function MemoryStars({ bridge, interactive, onSelect }: MemoryStarsProps)
   const bodies = useRef<Partial<Record<StarId, Group | null>>>({});
   const companion = useRef<Group>(null);
   const time = useRef(0);
+  const hover = useRef(0);
+  const invite = useRef(0);
   useFrame((_, delta) => {
-    if (!bridge.reducedMotion) time.current += Math.min(delta, 0.05);
+    const dt = Math.min(delta, 0.05);
+    if (!bridge.reducedMotion) time.current += dt;
     const t = time.current;
+    // Bulunulan yıldızın tepkileri; diğer yıldızlarda sıfır kalır.
+    const k = 1 - Math.exp(-dt * 7);
+    hover.current += ((bridge.fx.hover ? 1 : 0) - hover.current) * k;
+    invite.current += ((bridge.fx.invite ? 1 : 0) - invite.current) * k * 0.5;
+    const since = (performance.now() - bridge.fx.flareAt) / 1000;
+    const reduced = bridge.reducedMotion;
+    // Kısa yükseliş, yumuşak sönüş: sert bir beyaz flaş yerine korona nefes verir gibi açılır.
+    const flare = reduced || since < 0 || since > 1.6 ? 0 : since < 0.14 ? since / 0.14 : Math.exp(-(since - 0.14) * 3.2);
+    const wave = reduced || since < 0 || since > 1.1 ? 0 : since / 1.1;
     starOrder.forEach((id, i) => {
       const localTime = t * (id === 'azure' ? 0.4 : 1) + i * 17;
-      res.materials[id].surface.uniforms.uTime.value = localTime;
-      res.materials[id].corona.uniforms.uTime.value = localTime;
+      const { surface, corona } = res.materials[id];
+      surface.uniforms.uTime.value = localTime;
+      corona.uniforms.uTime.value = localTime;
+      const active = id === bridge.current && !bridge.flying;
+      corona.uniforms.uInvite.value = active ? invite.current : 0;
+      corona.uniforms.uHover.value = active ? hover.current : 0;
+      corona.uniforms.uFlare.value = active ? flare : 0;
+      corona.uniforms.uWave.value = active ? wave : 0;
       const body = bodies.current[id];
       if (body) body.rotation.y = t * (0.012 + i * 0.003);
     });
+    const binaryActive = bridge.current === 'binary' && !bridge.flying;
+    res.companionCorona.uniforms.uFlare.value = binaryActive ? flare : 0;
+    res.companionCorona.uniforms.uHover.value = binaryActive ? hover.current : 0;
     res.companionSurface.uniforms.uTime.value = t;
     res.companionCorona.uniforms.uTime.value = t;
     const angle = t * 0.22 + 2.2;
     companion.current?.position.set(Math.cos(angle) * COMPANION_ORBIT, 0, Math.sin(angle) * COMPANION_ORBIT);
     res.orbitMat.uniforms.uHead.value = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    // Eş yıldızın dünya konumu: erişilebilir dokunma hedefi onu da kapsar.
+    if (companion.current) {
+      companion.current.getWorldPosition(companionWorld);
+      bridge.companion.x = companionWorld.x;
+      bridge.companion.y = companionWorld.y;
+      bridge.companion.z = companionWorld.z;
+      bridge.companion.r = stars.binary.radius * COMPANION_RADIUS;
+    }
   });
 
+  // Kanvasta yıldıza (veya eş yıldıza) dokunma; asıl karar App'teki dokunuş korumasındadır.
   const select = (id: StarId) => (e: ThreeEvent<MouseEvent>) => {
     if (!interactive || e.delta > 8) return;
     e.stopPropagation(); onSelect(id);
@@ -349,3 +402,5 @@ export function MemoryStars({ bridge, interactive, onSelect }: MemoryStarsProps)
 }
 
 function noRaycast() { return null; }
+
+const companionWorld = new Vector3();

@@ -26,104 +26,113 @@ interface Filament {
   edge: string;
   intensity: number;
   stretch: [number, number];
+  /**
+   * Gaz alanının ölçeği (dünya birimi): aynı damardaki bütün parçacıklar aynı
+   * hacmin kesitlerini gösterir. Büyük değer = geniş, uzak yapılar.
+   */
+  scale: number;
 }
 
+// Konumlar Y takımyıldızına göre seçildi (yıldızlar: altın gövde ucunda öne yakın,
+// ikili ve pembe gövdede, turkuaz ve mor sol kolda, şafak sağ kolun ucunda).
+// Yıldızların çevresinde yüzeyi örtmeyecek kadar boşluk bırakılır (buildNebula).
 const filaments: Filament[] = [
-  // Derin bölüm: turkuaz, mor ve şafak yıldızlarının çevresi ve aralarındaki geçitler.
+  // Ön planda, açılışta kameranın iki yanında süzülen ince tül: paralaksın en güçlü katmanı.
   {
-    points: [[-150, 300, -1850], [80, 430, -1960], [300, 380, -2060]],
-    count: 12, size: [70, 160], spread: 50,
-    core: palette.fuchsia, edge: palette.purple, intensity: 0.16, stretch: [1.4, 2.6],
+    points: [[-360, -90, 250], [-230, -40, 140], [-180, -140, 10]],
+    count: 12, size: [70, 150], spread: 40, scale: 70,
+    core: palette.turquoise, edge: palette.blue, intensity: 0.32, stretch: [1.2, 2.2],
   },
   {
-    points: [[-60, 520, -1950], [200, 730, -2250], [430, 640, -2520]],
-    count: 22, size: [120, 300], spread: 90,
-    core: palette.turquoise, edge: palette.blue, intensity: 0.19, stretch: [1.3, 2.8],
+    points: [[280, 170, 230], [200, 110, 120], [320, 60, -20]],
+    count: 10, size: [70, 140], spread: 40, scale: 70,
+    core: palette.fuchsia, edge: palette.purple, intensity: 0.32, stretch: [1.2, 2.4],
   },
+  // Sağ alttan derine, sol yukarı kıvrılan turkuaz-yeşil ana damar (referanstaki parlak gövde).
   {
-    points: [[600, 780, -2600], [900, 1060, -2960], [1160, 900, -3220]],
-    count: 22, size: [130, 320], spread: 90,
-    core: palette.fuchsia, edge: palette.purple, intensity: 0.2, stretch: [1.4, 2.8],
-  },
-  {
-    points: [[1080, 640, -3120], [1340, 470, -3400]],
-    count: 10, size: [90, 200], spread: 60,
-    core: palette.green, edge: palette.turquoise, intensity: 0.15, stretch: [1.3, 2.4],
-  },
-  {
-    points: [[1250, 240, -3420], [1620, 500, -3860], [1940, 320, -4220]],
-    count: 24, size: [140, 340], spread: 100,
-    core: palette.gold, edge: palette.rose, intensity: 0.19, stretch: [1.3, 2.6],
-  },
-  {
-    points: [[1100, 760, -4400], [1800, 520, -4750], [2350, 180, -4500]],
-    count: 16, size: [360, 680], spread: 160,
-    core: palette.purple, edge: palette.navy, intensity: 0.18, stretch: [1.1, 2],
-  },
-
-  // Ön planda, açılışta kameranın iki yanında süzülen mavi-turkuaz tül.
-  {
-    points: [[-330, -110, 140], [-210, -60, 40], [-160, -150, -80]],
-    count: 12, size: [70, 150], spread: 40,
-    core: palette.turquoise, edge: palette.blue, intensity: 0.2, stretch: [1.2, 2.2],
-  },
-  {
-    points: [[260, 150, 110], [190, 95, 10], [300, 60, -120]],
-    count: 10, size: [70, 140], spread: 40,
-    core: palette.fuchsia, edge: palette.purple, intensity: 0.2, stretch: [1.2, 2.4],
-  },
-  // Sağ alttan derine kıvrılan turkuaz-yeşil ana damar; referanstaki parlak çekirdek.
-  {
-    points: [[360, -190, -60], [200, -150, -320], [20, -120, -620], [-140, -70, -950], [-330, -40, -1350]],
-    count: 46, size: [90, 260], spread: 70,
-    core: palette.green, edge: palette.turquoise, intensity: 0.24, stretch: [1.4, 3.2],
+    points: [[460, -280, 60], [270, -230, -280], [90, -70, -740], [-150, 110, -1260], [-370, 320, -1860], [-620, 560, -2480]],
+    count: 58, size: [90, 260], spread: 70, scale: 150,
+    core: palette.green, edge: palette.turquoise, intensity: 0.4, stretch: [1.4, 3.2],
   },
   // Sol üstte fuşya/pembe ışık damarları.
   {
-    points: [[-470, 230, -120], [-300, 280, -480], [-180, 230, -820], [-420, 190, -1300], [-620, 120, -1700]],
-    count: 40, size: [80, 230], spread: 60,
-    core: palette.fuchsia, edge: palette.purple, intensity: 0.24, stretch: [1.6, 3.4],
+    points: [[-520, 230, -60], [-360, 300, -460], [-260, 250, -880], [-500, 220, -1380], [-760, 160, -1900]],
+    count: 44, size: [80, 230], spread: 60, scale: 130,
+    core: palette.fuchsia, edge: palette.purple, intensity: 0.4, stretch: [1.6, 3.4],
   },
-  // Altın yıldızın çevresinde sıcak, altın-pembe bölge.
+  // Altın yıldızın ardında sıcak, altın-pembe bölge.
   {
-    points: [[240, -100, -170], [180, -70, -330], [120, 40, -480]],
-    count: 20, size: [70, 170], spread: 55,
-    core: palette.gold, edge: palette.rose, intensity: 0.2, stretch: [1.2, 2.4],
+    points: [[190, -40, -430], [90, -250, -540], [-80, -210, -660]],
+    count: 20, size: [70, 170], spread: 55, scale: 110,
+    core: palette.gold, edge: palette.rose, intensity: 0.34, stretch: [1.2, 2.4],
   },
-  // İki yıldız arasındaki yolu kesen ince tül; kamera bunun içinden geçer.
+  // Altından ikiliye giden yolu kesen ince tül; kamera bunun içinden geçer.
   {
-    points: [[210, 0, -640], [40, 90, -730], [-160, 170, -800]],
-    count: 18, size: [60, 140], spread: 45,
-    core: palette.turquoise, edge: palette.purple, intensity: 0.16, stretch: [1.4, 2.6],
+    points: [[220, -40, -650], [40, -20, -740], [-180, -110, -820]],
+    count: 18, size: [60, 140], spread: 45, scale: 90,
+    core: palette.turquoise, edge: palette.purple, intensity: 0.28, stretch: [1.4, 2.6],
   },
   // Sol altta kızıl/eflatun bölge.
   {
-    points: [[-420, -260, -380], [-260, -320, -760], [-120, -330, -1150], [120, -300, -1500]],
-    count: 30, size: [100, 260], spread: 70,
-    core: palette.rose, edge: palette.purple, intensity: 0.2, stretch: [1.3, 2.8],
+    points: [[-470, -300, -280], [-310, -370, -700], [-170, -400, -1120], [90, -360, -1520]],
+    count: 32, size: [100, 260], spread: 70, scale: 150,
+    core: palette.rose, edge: palette.purple, intensity: 0.34, stretch: [1.3, 2.8],
   },
-  // İkili yıldızın ardında buz mavisi / lavanta ışık.
+  // İkili ve pembe yıldızın (Y'nin gövdesi) ardında buz mavisi / lavanta ışık.
   {
-    points: [[160, 260, -1450], [-60, 210, -1620], [-320, 150, -1780]],
-    count: 22, size: [140, 340], spread: 90,
-    core: palette.turquoise, edge: palette.blue, intensity: 0.2, stretch: [1.2, 2.4],
+    points: [[260, 110, -1340], [40, 60, -1500], [-280, 20, -1720]],
+    count: 22, size: [140, 320], spread: 90, scale: 180,
+    core: palette.turquoise, edge: palette.blue, intensity: 0.3, stretch: [1.2, 2.4],
   },
-  // En arkada geniş mor/lacivert hacim — derinlik zemini.
+  // Kolların birleştiği düğümün çevresinde fuşya bir tül.
   {
-    points: [[700, 260, -1900], [250, 340, -2300], [-300, 260, -2500], [-850, 120, -2300]],
-    count: 26, size: [320, 620], spread: 160,
-    core: palette.purple, edge: palette.navy, intensity: 0.2, stretch: [1.1, 2],
+    points: [[-180, 150, -1430], [70, 240, -1620], [290, 170, -1780]],
+    count: 16, size: [80, 190], spread: 55, scale: 120,
+    core: palette.fuchsia, edge: palette.purple, intensity: 0.28, stretch: [1.4, 2.6],
+  },
+  // Sol kol: turkuaz yıldızın çevresi ve mor yıldıza uzanan geçit.
+  {
+    points: [[-40, 210, -1950], [-240, 380, -2260], [-450, 360, -2520]],
+    count: 22, size: [110, 280], spread: 85, scale: 160,
+    core: palette.turquoise, edge: palette.blue, intensity: 0.32, stretch: [1.3, 2.8],
   },
   {
-    points: [[650, -280, -1700], [330, -380, -2100], [-120, -420, -2350]],
-    count: 16, size: [300, 560], spread: 140,
-    core: palette.blue, edge: palette.purple, intensity: 0.16, stretch: [1.1, 2],
+    points: [[-280, 600, -2540], [-540, 880, -2900], [-800, 780, -3160]],
+    count: 22, size: [120, 300], spread: 90, scale: 180,
+    core: palette.fuchsia, edge: palette.purple, intensity: 0.34, stretch: [1.4, 2.8],
   },
-  // Sağ üstte uzak altın-yeşil vurgu.
+  // Sağ kol: şafak yıldızının altın-pembe ışığı ve yeşil vurgusu.
   {
-    points: [[520, 240, -900], [420, 320, -1250], [560, 380, -1600]],
-    count: 14, size: [120, 260], spread: 70,
-    core: palette.gold, edge: palette.green, intensity: 0.15, stretch: [1.3, 2.6],
+    points: [[360, 800, -3120], [680, 1060, -3500], [1000, 900, -3820]],
+    count: 24, size: [140, 330], spread: 100, scale: 200,
+    core: palette.gold, edge: palette.rose, intensity: 0.34, stretch: [1.3, 2.6],
+  },
+  {
+    points: [[300, 640, -2860], [470, 520, -3160]],
+    count: 10, size: [90, 200], spread: 60, scale: 120,
+    core: palette.green, edge: palette.turquoise, intensity: 0.28, stretch: [1.3, 2.4],
+  },
+  // Sağda uzak altın-yeşil vurgu.
+  {
+    points: [[560, 200, -900], [470, 320, -1280], [620, 400, -1700]],
+    count: 14, size: [120, 260], spread: 70, scale: 150,
+    core: palette.gold, edge: palette.green, intensity: 0.26, stretch: [1.3, 2.6],
+  },
+  // En arkada geniş mor/lacivert hacimler — derinlik zemini.
+  {
+    points: [[820, 300, -2000], [300, 380, -2400], [-300, 300, -2600], [-920, 160, -2400]],
+    count: 26, size: [320, 620], spread: 160, scale: 320,
+    core: palette.purple, edge: palette.navy, intensity: 0.3, stretch: [1.1, 2],
+  },
+  {
+    points: [[700, -300, -1800], [330, -400, -2200], [-120, -440, -2450]],
+    count: 16, size: [300, 560], spread: 140, scale: 300,
+    core: palette.blue, edge: palette.purple, intensity: 0.26, stretch: [1.1, 2],
+  },
+  {
+    points: [[-300, 900, -4300], [450, 1150, -4500], [1250, 820, -4350]],
+    count: 18, size: [380, 700], spread: 170, scale: 360,
+    core: palette.purple, edge: palette.navy, intensity: 0.3, stretch: [1.1, 2],
   },
 ];
 
@@ -133,7 +142,7 @@ export interface NebulaPuffs {
   sizes: Float32Array;
   cores: Float32Array;
   edges: Float32Array;
-  params: Float32Array; // yoğunluk, tohum, uzama, boşta
+  params: Float32Array; // yoğunluk, damar tohumu, uzama, gaz alanı ölçeği
   tangents: Float32Array; // damarın yerel yönü; parçacık bu eksende uzar
 }
 
@@ -142,7 +151,10 @@ export function buildNebula(share: number): NebulaPuffs {
   const list: { c: Vector3; size: number; core: Color; edge: Color; tangent: Vector3; p: [number, number, number, number] }[] = [];
   const avoid = Object.values(stars);
 
-  for (const filament of filaments) {
+  filaments.forEach((filament, index) => {
+    // Damarın bütün parçacıkları aynı tohumu paylaşır: üst üste binen kesitler
+    // aynı yapıyı güçlendirir, birbirini ortalayıp sise dönüşmez.
+    const seed = index * 37.17 + 11.3;
     const curve = new CatmullRomCurve3(filament.points.map((p) => new Vector3(...p)), false, 'centripetal');
     const core = new Color(filament.core);
     const edge = new Color(filament.edge);
@@ -170,10 +182,10 @@ export function buildNebula(share: number): NebulaPuffs {
         core: coreMix,
         edge,
         tangent,
-        p: [filament.intensity * range(rng, 0.7, 1.25), rng() * 100, range(rng, filament.stretch[0], filament.stretch[1]), 0],
+        p: [filament.intensity * range(rng, 0.8, 1.15), seed, range(rng, filament.stretch[0], filament.stretch[1]), filament.scale],
       });
     }
-  }
+  });
 
   const count = list.length;
   const centers = new Float32Array(count * 3);

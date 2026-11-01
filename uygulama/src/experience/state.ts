@@ -17,12 +17,21 @@ export interface ExperienceState {
   detailOpen: boolean;
   letterOpen: boolean;
   nextFlightId: number;
+  /** Bulunulan yıldıza getiren uçuşun kimliği; varıştan önce başlayan dokunuşları ayırt eder. */
+  arrivalId: number;
+  /** Anısı en az bir kez açılmış yıldızlar: yıldız ipucu yeniden gösterilmez. */
+  opened: StarId[];
 }
 
 export type ExperienceAction =
   | { type: 'travel'; to: Destination }
   | { type: 'arrive'; flightId: number }
   | { type: 'openDetail' }
+  /**
+   * Yıldızın kendisine (kanvasta ya da erişilebilir hedefinde) dokunma.
+   * `arrival`, dokunuşun başladığı andaki varış kimliğidir.
+   */
+  | { type: 'touchStar'; id: StarId; arrival: number }
   | { type: 'closeDetail' }
   | { type: 'openLetter' }
   | { type: 'closeLetter' }
@@ -36,25 +45,36 @@ export const initialState: ExperienceState = {
   detailOpen: false,
   letterOpen: false,
   nextFlightId: 1,
+  arrivalId: 0,
+  opened: [],
 };
+
+function travel(state: ExperienceState, to: Destination): ExperienceState {
+  // Yolculuk sürerken yeni seçimler kilitli; aynı yere tekrar uçulmaz.
+  if (state.flight) return state;
+  if (to === 'home' && state.phase === 'overview') return state;
+  if (to === 'home' && state.phase === 'intro') return state;
+  if (to !== 'home' && to === state.current) return state;
+  return {
+    ...state,
+    phase: 'travelling',
+    detailOpen: false,
+    letterOpen: false,
+    flight: { id: state.nextFlightId, to },
+    nextFlightId: state.nextFlightId + 1,
+  };
+}
+
+function openDetail(state: ExperienceState): ExperienceState {
+  if (state.phase !== 'arrived' || !state.current || state.detailOpen) return state;
+  const opened = state.opened.includes(state.current) ? state.opened : [...state.opened, state.current];
+  return { ...state, detailOpen: true, letterOpen: false, opened };
+}
 
 export function experienceReducer(state: ExperienceState, action: ExperienceAction): ExperienceState {
   switch (action.type) {
-    case 'travel': {
-      // Yolculuk sürerken yeni seçimler kilitli; aynı yere tekrar uçulmaz.
-      if (state.flight) return state;
-      if (action.to === 'home' && state.phase === 'overview') return state;
-      if (action.to === 'home' && state.phase === 'intro') return state;
-      if (action.to !== 'home' && action.to === state.current) return state;
-      return {
-        ...state,
-        phase: 'travelling',
-        detailOpen: false,
-        letterOpen: false,
-        flight: { id: state.nextFlightId, to: action.to },
-        nextFlightId: state.nextFlightId + 1,
-      };
-    }
+    case 'travel':
+      return travel(state, action.to);
     case 'arrive': {
       // Eski veya iptal edilmiş bir uçuşun tamamlanma çağrısı durumu yazamaz.
       if (!state.flight || state.flight.id !== action.flightId) return state;
@@ -64,11 +84,21 @@ export function experienceReducer(state: ExperienceState, action: ExperienceActi
       }
       // Keşif, varışta işaretlenir; tekrar ziyaret sayacı artırmaz.
       const visited = state.visited.includes(to) ? state.visited : [...state.visited, to];
-      return { ...state, phase: 'arrived', current: to, flight: null, visited };
+      return { ...state, phase: 'arrived', current: to, flight: null, visited, arrivalId: state.flight.id };
     }
     case 'openDetail':
-      if (state.phase !== 'arrived' || !state.current) return state;
-      return { ...state, detailOpen: true };
+      return openDetail(state);
+    case 'touchStar': {
+      // Uçuş sırasında ya da bir dialog açıkken yıldız dokunuşları yok sayılır.
+      if (state.flight || state.detailOpen || state.letterOpen) return state;
+      if (state.phase === 'arrived' && action.id === state.current) {
+        // Yolculuğu başlatan dokunuş, varışta anıyı da açmaz: dokunuş bu varıştan sonra başlamış olmalı.
+        if (action.arrival !== state.arrivalId) return state;
+        return openDetail(state);
+      }
+      // Uzak bir yıldız: o yıldıza yolculuk.
+      return travel(state, action.id);
+    }
     case 'closeDetail':
       return state.detailOpen ? { ...state, detailOpen: false } : state;
     case 'openLetter':

@@ -41,14 +41,18 @@ void main(){
   band=pow(band,3.);
   float n=fbm(d*2.4)*.5+.5;
   float m=fbm(d*5.1+vec3(3.1))*.5+.5;
-  vec3 col=mix(voidCol,navy,smoothstep(.25,.85,n)*.9);
-  col=mix(col,blue,smoothstep(.55,.95,n)*band*.55);
-  col=mix(col,purple,smoothstep(.5,.9,m)*(.25+band*.5));
-  col+=fuchsia*smoothstep(.68,.95,m*n+band*.2)*.22*band;
-  col+=teal*smoothstep(.62,.92,n)*smoothstep(.4,.8,1.-m)*.18;
+  // İnce ölçek: renkli bölgeler düz bir pus olarak değil, kümeler hâlinde okunur.
+  float fine=fbm(d*13.+vec3(1.3))*.5+.5;
+  float grain=smoothstep(.3,.78,fine);
+  // Zemin çoğunlukla koyu lacivert boşluk; renk yalnız bant ve bölgelerde.
+  vec3 col=mix(voidCol,navy,smoothstep(.4,.85,n)*.75);
+  col+=blue*smoothstep(.55,.95,n)*band*.42*grain;
+  col+=purple*smoothstep(.52,.92,m)*(.14+band*.45)*grain;
+  col+=fuchsia*smoothstep(.7,.95,m*n+band*.2)*.2*band*grain;
+  col+=teal*smoothstep(.62,.92,n)*smoothstep(.4,.8,1.-m)*.14*grain;
   // Koyu toz damarları
   float dust=smoothstep(.45,.7,fbm(d*7.3+vec3(9.4))*.5+.5);
-  col*=1.-dust*.45*band;
+  col*=1.-dust*.6*band;
   gl_FragColor=vec4(col,1.);
 }
 `;

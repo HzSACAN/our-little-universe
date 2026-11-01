@@ -1,7 +1,9 @@
 // Tam yolculuk: açılış → altın → ikili → geri → genel görünüm; ara kareler ve ölçüm.
 import { launch, BASE } from './cdp.mjs';
+import { runChecks } from './check.mjs';
 const [w, h, mobile, tag] = [Number(process.argv[2] ?? 1440), Number(process.argv[3] ?? 900), process.argv[4] === 'm', process.argv[5] ?? 'desk'];
 const b = await launch();
+await runChecks(async ({ ok, none, consoleClean }) => {
 await b.viewport(w, h, mobile, mobile ? 2 : 1);
 await b.go(`${BASE}/?olcum`);
 await b.wait(5000);
@@ -22,5 +24,5 @@ await fly('.primary', '2-gold');
 await fly('.next-destination', '3-binary');
 await fly('.round-button', '4-back');
 await fly('.journey-hud button', '5-home');
-console.log(b.logs.filter(l => !/vite|DevTools|THREE.Clock/.test(l)).join('\n'));
-await b.close();
+consoleClean(b.logs);
+}, { close: () => b.close() });

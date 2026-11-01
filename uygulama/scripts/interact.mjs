@@ -1,7 +1,8 @@
 import { launch, BASE } from './cdp.mjs';
+import { runChecks } from './check.mjs';
 const b = await launch();
-const ok = (name, cond, extra = '') => console.log(cond ? 'GEÇTİ ' : 'KALDI ', name, extra);
-const st = () => b.eval(`({ cls: document.querySelector('.app')?.className, title: document.querySelector('.arrival-panel h2')?.textContent, count: document.querySelector('.journey-hud span')?.textContent, dialog: !!document.querySelector('dialog[open]'), focus: document.activeElement?.textContent?.trim().slice(0,30), bar: document.querySelector('.flight-line i')?.style.transform })`);
+await runChecks(async ({ ok, none, consoleClean }) => {
+const st = () => b.eval(`({ cls: document.querySelector('.app')?.className, title: document.querySelector('.arrival-panel h2')?.textContent, count: document.querySelector('.journey-hud span')?.textContent, dialog: !!document.querySelector('dialog[open]'), focus: (document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.textContent ?? '').trim().slice(0,30), bar: document.querySelector('.flight-line i')?.style.transform })`);
 const waitFor = async (pred, ms = 15000) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { const s = await st(); if (pred(s)) return { s, t: Date.now() - t0 }; await b.wait(40); } return { s: await st(), t: -1 }; };
 const mouse = async (type, x, y, buttons = 1) => b.send('Input.dispatchMouseEvent', { type, x, y, button: 'left', buttons: type === 'mouseMoved' ? buttons : 1, clickCount: 1 });
 const key = async (k, code, kc, text) => { await b.send('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code, windowsVirtualKeyCode: kc, text }); await b.send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code, windowsVirtualKeyCode: kc }); };
@@ -38,13 +39,13 @@ if (lbl) {
 await b.shot('i-after-drag');
 
 // 3) Anı dialogu: aç, Escape ile kapat, odak geri gelir, kamera yerinde kalır.
-await b.eval(`document.querySelector('.arrival-panel .text-button').focus()`);
+await b.eval(`document.querySelector('.star-target').focus()`);
 await key('Enter', 'Enter', 13, String.fromCharCode(13));
-await b.wait(600);
+await b.wait(900);
 ok('anı dialogu açıldı', (await st()).dialog);
 await b.shot('i-dialog-desk');
 await key('Escape', 'Escape', 27);
-await b.wait(400);
+await b.wait(700);
 r = { s: await st() };
 ok('Escape ile kapandı, odak geri döndü', !r.s.dialog && r.s.focus?.startsWith('Anıyı aç'), r.s.focus);
 ok('kapatınca aynı yıldızda', r.s.cls.includes('phase-arrived') && r.s.title === 'Başladığımız yer');
@@ -57,7 +58,7 @@ r = await waitFor(s => s.cls.includes('phase-arrived') && s.title === 'İkimizin
 ok('resize sonrası ikinci yıldıza varış', r.t >= 0, `${r.t}ms sonra`);
 ok('ziyaretler korunuyor (2/2)', r.s.count?.startsWith('2 /'), r.s.count);
 await b.wait(800); await b.shot('i-resize-phone-binary');
-await b.eval(`document.querySelector('.arrival-panel .text-button').click()`);
+await b.eval(`document.querySelector('.star-target').click()`);
 await b.wait(700); await b.shot('i-dialog-phone');
 await key('Escape', 'Escape', 27); await b.wait(300);
 await b.viewport(1440, 900); await b.wait(800); await b.shot('i-resize-back-desk');
@@ -116,6 +117,5 @@ ok('WebGL yokken yedek liste', await b.eval(`!!document.querySelector('.fallback
 await b.shot('i-fallback-desk');
 await b.send('Page.removeScriptToEvaluateOnNewDocument', { identifier: script.identifier });
 
-console.log('--- konsol ---');
-console.log(b.logs.filter(l => !/vite|DevTools|THREE.Clock/.test(l)).join('\n') || '(hata yok)');
-await b.close();
+consoleClean(b.logs);
+}, { close: () => b.close() });

@@ -4,7 +4,7 @@ import { CubicBezierCurve3, Euler, MathUtils, Matrix4, PerspectiveCamera, Quater
 import type { Destination, Flight } from './state';
 import type { SceneBridge } from './bridge';
 import { createFrameClock, frameSeconds, restartFrameClock } from './timing';
-import { baseFov, buildFlightCurve, flightDuration, poseFor, smootherstep, type CameraPose, type Layout } from './world';
+import { buildFlightCurve, fovFor, flightDuration, poseFor, smootherstep, type CameraPose, type Layout } from './world';
 
 // Kameranın tek sahibi. Uçuş, sürükleyerek bakınma, fare paralaksı ve
 // kadraj uyarlaması burada yürütülür; başka hiçbir şey kameraya yazmaz.
@@ -28,6 +28,8 @@ interface ActiveFlight {
   toPose: CameraPose;
   duration: number;
   elapsed: number;
+  fromFov: number;
+  toFov: number;
   reduced: boolean;
   snapped: boolean;
 }
@@ -61,6 +63,8 @@ export function CameraRig({ layout, at, flight, bridge, onArrive, running }: Cam
   const onArriveRef = useRef(onArrive);
   onArriveRef.current = onArrive;
   const layoutRef = useRef(layout);
+  // Kameranın durduğu yer: dinlenme görüş açısı buna göre seçilir.
+  const restAt = useRef<Destination>(at);
 
   const setBase = (pose: CameraPose) => {
     basePosition.current.copy(pose.position);
@@ -72,7 +76,7 @@ export function CameraRig({ layout, at, flight, bridge, onArrive, running }: Cam
     setBase(poseFor(at, layout));
     camera.position.copy(basePosition.current);
     camera.quaternion.copy(baseQuat.current);
-    camera.fov = baseFov(layout);
+    camera.fov = fovFor(at, layout);
     camera.near = 0.5;
     camera.far = 9000;
     camera.updateProjectionMatrix();
@@ -99,6 +103,8 @@ export function CameraRig({ layout, at, flight, bridge, onArrive, running }: Cam
       toPose: pose,
       duration,
       elapsed: 0,
+      fromFov: fovFor(restAt.current, layoutRef.current),
+      toFov: fovFor(to, layoutRef.current),
       reduced,
       snapped: false,
     };
@@ -134,7 +140,9 @@ export function CameraRig({ layout, at, flight, bridge, onArrive, running }: Cam
 
   // Uçuş dışındayken bulunulan yer değişirse (ör. varış) taban kadrajı güncelle.
   useEffect(() => {
-    if (!active.current) setBase(poseFor(at, layoutRef.current));
+    if (active.current) return;
+    restAt.current = at;
+    setBase(poseFor(at, layoutRef.current));
   }, [at]);
 
   // Unmount: köprüdeki uçuş bayrağını temizle; eski uçuş callback'i çağrılmaz.
@@ -154,7 +162,7 @@ export function CameraRig({ layout, at, flight, bridge, onArrive, running }: Cam
     if (!reduced) clock.current += Math.min(dt, 0.05);
     const f = active.current;
     let travelTarget = 0;
-    let fov = baseFov(layoutRef.current);
+    let fov = fovFor(restAt.current, layoutRef.current);
     let roll = 0;
 
     if (f) {
@@ -193,12 +201,14 @@ export function CameraRig({ layout, at, flight, bridge, onArrive, running }: Cam
 
         const intensity = Math.sin(t * Math.PI);
         travelTarget = intensity;
-        fov += intensity * 7;
+        fov = MathUtils.lerp(f.fromFov, f.toFov, s) + intensity * 7;
         roll = layoutRef.current === 'wide' ? Math.sin(t * Math.PI) * 0.012 : 0;
       }
       if (bridge.progressBar) bridge.progressBar.style.transform = `scaleX(${t})`;
 
+      if (f.reduced) fov = t >= 0.5 ? f.toFov : f.fromFov;
       if (t >= 1) {
+        restAt.current = f.to;
         setBase(f.toPose);
         camera.position.copy(basePosition.current);
         camera.quaternion.copy(baseQuat.current);

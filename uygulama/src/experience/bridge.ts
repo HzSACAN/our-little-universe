@@ -22,6 +22,13 @@ export interface SceneBridge {
   /** Etiketler bu yıldız için gizlenir (kamera yanında duruyorsa). */
   current: StarId | null;
   flying: boolean;
+  /** Bulunulan yıldızın erişilebilir dokunma hedefi ve yanındaki ipucu; konumları projeksiyonla yazılır. */
+  starTarget: HTMLElement | null;
+  starHint: HTMLElement | null;
+  /** İkili yıldızın eş yıldızının dünya konumu ve yarıçapı (sahne her frame yazar). */
+  companion: { x: number; y: number; z: number; r: number };
+  /** Yıldız tepkileri: davet nabzı, hover/odak ve anı açılışındaki ışık dalgasının başlangıcı (ms). */
+  fx: { invite: boolean; hover: boolean; flareAt: number };
 }
 
 export const createBridge = (reducedMotion: boolean): SceneBridge => ({
@@ -33,6 +40,10 @@ export const createBridge = (reducedMotion: boolean): SceneBridge => ({
   travel: 0,
   current: null,
   flying: false,
+  starTarget: null,
+  starHint: null,
+  companion: { x: 0, y: 0, z: 0, r: 0 },
+  fx: { invite: false, hover: false, flareAt: -Infinity },
 });
 
 export const LOOK_LIMITS = { yaw: 0.32, pitch: 0.2 };

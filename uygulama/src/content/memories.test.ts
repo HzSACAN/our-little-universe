@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { discoveredEdges, isComplete, memories, nextUnvisited, starOrder } from './memories';
+import { isComplete, memories, nextUnvisited, starOrder } from './memories';
 
 describe('altı yıldızlı hikâye', () => {
   it('altı farklı durağa ve tutarlı sıra numaralarına sahiptir', () => {
@@ -11,14 +11,10 @@ describe('altı yıldızlı hikâye', () => {
     expect(isComplete(starOrder.slice(0, 5))).toBe(false);
     expect(isComplete([...starOrder].reverse())).toBe(true);
   });
-  it('yalnız iki ucu keşfedilmiş komşu yıldızları bağlar', () => {
-    expect(discoveredEdges(['gold', 'rose'])).toEqual([]);
-    expect(discoveredEdges(['rose', 'binary', 'gold'])).toEqual([['gold', 'binary'], ['binary', 'rose']]);
-  });
-  it('kapanış çizgisini ancak bütün yıldızlar keşfedildiğinde ekler', () => {
-    expect(discoveredEdges(['gold', 'dawn'])).toEqual([]);
-    expect(discoveredEdges(starOrder)).toHaveLength(6);
-    expect(discoveredEdges([...starOrder].reverse()).at(-1)).toEqual(['dawn', 'gold']);
+  it('mektup belirli bir sıraya veya son numaralı yıldıza bağlı değildir', () => {
+    expect(isComplete(['dawn', 'violet', 'gold', 'azure', 'binary', 'rose'])).toBe(true);
+    expect(isComplete(['dawn', 'dawn', 'violet', 'gold', 'azure', 'binary'])).toBe(false);
+    expect(isComplete(['binary', 'rose', 'azure', 'violet', 'gold', 'dawn'])).toBe(true);
   });
   it('sıradaki keşfedilmemiş durağa döner ve gerektiğinde başa sarar', () => {
     expect(nextUnvisited(null, [])).toBe('gold');

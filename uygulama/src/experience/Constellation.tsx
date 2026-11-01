@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { AdditiveBlending, BufferAttribute, BufferGeometry, CatmullRomCurve3, Line, ShaderMaterial, Vector3 } from 'three';
-import { discoveredEdges, isComplete, type StarId } from '../content/memories';
+import { isComplete, type StarId } from '../content/memories';
+import { discoveredEdges } from './constellationGraph';
 import { stars } from './world';
 import type { SceneBridge } from './bridge';
 

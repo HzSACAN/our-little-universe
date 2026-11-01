@@ -7,7 +7,7 @@ import type { StarId } from '../content/memories';
 import type { Flight, Destination } from './state';
 import type { SceneBridge } from './bridge';
 import { createFrameClock, createQualityWindow, frameSeconds, restartFrameClock, shouldLowerQuality } from './timing';
-import { qualitySettings, type QualityTier } from './quality';
+import { forcedTier, qualitySettings, type QualityTier } from './quality';
 import { Sky } from './Sky';
 import { Nebula } from './Nebula';
 import { Starfield } from './Starfield';
@@ -60,7 +60,7 @@ export function Scene(props: SceneProps) {
       {!disabled.has('sky') && <Sky octaves={q.skyOctaves} />}
       {!disabled.has('stars') && <Starfield far={q.farStars} mid={q.midStars} dust={q.dust} bridge={bridge} />}
       {!disabled.has('nebula') && (
-        <Nebula share={q.nebulaShare} octaves={q.nebulaOctaves} resolution={q.nebulaResolution} bridge={bridge} />
+        <Nebula share={q.nebulaShare} octaves={q.nebulaOctaves} resolution={q.nebulaResolution} sharpen={q.nebulaSharpen} bridge={bridge} />
       )}
       {!disabled.has('memory') && <MemoryStars bridge={bridge} interactive={interactive} onSelect={onSelect} />}
       <Constellation visited={visited} bridge={bridge} />
@@ -108,6 +108,8 @@ function ContextWatcher({ onLost }: { onLost: () => void }) {
  * Sürekli yavaş çizimde bir alt kalite kademesine iner. Önce piksel oranı,
  * bulutsu yoğunluğu ve bloom geçiş sayısı düşer; görsel dil korunur.
  */
+const fixedTier = forcedTier() !== null;
+
 function QualityGovernor({ tier, running, onSlow }: { tier: QualityTier; running: boolean; onSlow: () => void }) {
   const window = useRef(createQualityWindow());
   const clock = useRef(createFrameClock());
@@ -116,7 +118,7 @@ function QualityGovernor({ tier, running, onSlow }: { tier: QualityTier; running
     restartFrameClock(clock.current);
   }, [tier, running]);
   useFrame((_, delta) => {
-    if (!running || tier === 'low') return;
+    if (!running || tier === 'low' || fixedTier) return;
     if (shouldLowerQuality(window.current, frameSeconds(clock.current, delta))) onSlow();
   });
   return null;

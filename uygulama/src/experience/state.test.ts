@@ -57,6 +57,62 @@ describe('deneyim durumu', () => {
   });
 });
 
+describe('yıldıza dokunma', () => {
+  const arriveAt = (to: 'gold' | 'binary', from: ExperienceState = initialState) => {
+    const s = run([{ type: 'travel', to }], from);
+    return run([{ type: 'arrive', flightId: s.flight!.id }], s);
+  };
+
+  it('genel görünümde ya da başka bir yıldızdayken uzak yıldıza dokunmak yolculuk başlatır', () => {
+    let s = run([{ type: 'touchStar', id: 'gold', arrival: 0 }]);
+    expect(s.phase).toBe('travelling');
+    expect(s.flight?.to).toBe('gold');
+    s = run([{ type: 'arrive', flightId: s.flight!.id }], s);
+    s = run([{ type: 'touchStar', id: 'binary', arrival: s.arrivalId }], s);
+    expect(s.flight?.to).toBe('binary');
+    expect(s.detailOpen).toBe(false);
+  });
+
+  it('varıştan sonra bulunulan yıldıza dokunmak anıyı açar (yolculuk başlatmaz)', () => {
+    const s = arriveAt('gold');
+    const touched = run([{ type: 'touchStar', id: 'gold', arrival: s.arrivalId }], s);
+    expect(touched.detailOpen).toBe(true);
+    expect(touched.flight).toBeNull();
+    expect(touched.phase).toBe('arrived');
+    expect(touched.opened).toEqual(['gold']);
+  });
+
+  it('yolculuğu başlatan dokunuş varışta anıyı açmaz; anı kendiliğinden açılmaz', () => {
+    const started = run([{ type: 'touchStar', id: 'gold', arrival: initialState.arrivalId }]);
+    const pressArrival = started.arrivalId; // dokunuşun başladığı andaki varış
+    const arrived = run([{ type: 'arrive', flightId: started.flight!.id }], started);
+    expect(arrived.detailOpen).toBe(false);
+    expect(arrived.arrivalId).not.toBe(pressArrival);
+    expect(run([{ type: 'touchStar', id: 'gold', arrival: pressArrival }], arrived)).toBe(arrived);
+  });
+
+  it('uçuş sırasında ve dialog açıkken dokunuşlar kilitli; hızlı tekrar tek dialog bırakır', () => {
+    const flying = run([{ type: 'travel', to: 'gold' }]);
+    expect(run([{ type: 'touchStar', id: 'binary', arrival: 0 }], flying)).toBe(flying);
+    expect(run([{ type: 'touchStar', id: 'gold', arrival: 0 }], flying)).toBe(flying);
+    const s = arriveAt('gold');
+    const once = run([{ type: 'touchStar', id: 'gold', arrival: s.arrivalId }], s);
+    const twice = run([{ type: 'touchStar', id: 'gold', arrival: s.arrivalId }, { type: 'touchStar', id: 'binary', arrival: s.arrivalId }], once);
+    expect(twice).toBe(once);
+  });
+
+  it('kapatıp yeniden dokunmak anıyı yeniden açar; geri dönüşte yeni varış gerekir', () => {
+    let s = arriveAt('gold');
+    s = run([{ type: 'touchStar', id: 'gold', arrival: s.arrivalId }, { type: 'closeDetail' }], s);
+    expect(run([{ type: 'touchStar', id: 'gold', arrival: s.arrivalId }], s).detailOpen).toBe(true);
+    const goldArrival = s.arrivalId;
+    s = arriveAt('binary', s);
+    s = arriveAt('gold', s);
+    expect(run([{ type: 'touchStar', id: 'gold', arrival: goldArrival }], s)).toBe(s);
+    expect(s.opened).toEqual(['gold']);
+  });
+});
+
 describe('mektup ve alternatif okuma akışı', () => {
   const order = ['violet', 'gold', 'dawn', 'rose', 'binary', 'azure'] as const;
   it('ilk beş keşifte mektubu kilitler, altıncı varışta açılabilir kılar', () => {

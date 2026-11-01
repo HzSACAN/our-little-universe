@@ -1,4 +1,5 @@
 import { useEffect, useState, type RefObject } from 'react';
+import { createTapGuard, type TapGuard } from './tapGuard';
 import { layoutFor, type Layout } from './layout';
 import { LOOK_LIMITS, type SceneBridge } from './bridge';
 
@@ -6,6 +7,8 @@ export function useLayout(): Layout {
   const [layout, setLayout] = useState<Layout>(() => layoutFor(window.innerWidth, window.innerHeight));
   useEffect(() => {
     const update = () => setLayout(layoutFor(window.innerWidth, window.innerHeight));
+    // İlk çizim ile dinleyicinin bağlanması arasındaki boyut değişimi kaçmasın.
+    update();
     window.addEventListener('resize', update, { passive: true });
     window.addEventListener('orientationchange', update);
     return () => {
@@ -74,6 +77,10 @@ export function useLookControls(target: RefObject<HTMLElement | null>, bridge: S
         drag = null;
         return;
       }
+      // Sahne ve yıldızın üzerine oturan dokunma hedefi bakınmayı başlatabilir;
+      // panel ve düğmeler başlatmaz.
+      const origin = e.target instanceof Element ? e.target : null;
+      if (!origin?.closest('.stage, [data-look-through]') || !el.isConnected) return;
       if (!enabled || bridge.flying || bridge.reducedMotion || e.button > 0) return;
       drag = { id: e.pointerId, x: e.clientX, y: e.clientY, yaw: bridge.look.yaw, pitch: bridge.look.pitch };
     };
@@ -99,14 +106,14 @@ export function useLookControls(target: RefObject<HTMLElement | null>, bridge: S
       bridge.look.hoverX = 0;
       bridge.look.hoverY = 0;
     };
-    el.addEventListener('pointerdown', down);
+    window.addEventListener('pointerdown', down);
     window.addEventListener('pointermove', move, { passive: true });
     window.addEventListener('pointerup', end);
     window.addEventListener('pointercancel', end);
     el.addEventListener('pointerleave', leave);
     window.addEventListener('blur', onBlur);
     return () => {
-      el.removeEventListener('pointerdown', down);
+      window.removeEventListener('pointerdown', down);
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', end);
       window.removeEventListener('pointercancel', end);
@@ -114,4 +121,42 @@ export function useLookControls(target: RefObject<HTMLElement | null>, bridge: S
       window.removeEventListener('blur', onBlur);
     };
   }, [target, bridge, enabled]);
+}
+
+/** Kaba işaretçi (dokunmatik ekran) mi? İpucu metni buna göre seçilir. */
+export function useCoarsePointer() {
+  const [coarse, setCoarse] = useState(() => window.matchMedia('(pointer: coarse)').matches);
+  useEffect(() => {
+    const query = window.matchMedia('(pointer: coarse)');
+    const onChange = (e: MediaQueryListEvent) => setCoarse(e.matches);
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, []);
+  return coarse;
+}
+
+/**
+ * Sayfadaki bütün işaretçi basışlarını izleyen dokunuş koruması. Basış başladığında
+ * o anki varış kimliği kaydedilir; sürükleme, pointercancel ve ikinci parmak dokunuşu bozar.
+ */
+export function useTapGuard(arrival: RefObject<number>): TapGuard {
+  const [guard] = useState(createTapGuard);
+  useEffect(() => {
+    const opts = { capture: true, passive: true } as const;
+    const down = (e: PointerEvent) => guard.down(e.pointerId, e.clientX, e.clientY, arrival.current);
+    const move = (e: PointerEvent) => guard.move(e.pointerId, e.clientX, e.clientY);
+    const up = (e: PointerEvent) => guard.up(e.pointerId);
+    const cancel = (e: PointerEvent) => guard.cancel(e.pointerId);
+    window.addEventListener('pointerdown', down, opts);
+    window.addEventListener('pointermove', move, opts);
+    window.addEventListener('pointerup', up, opts);
+    window.addEventListener('pointercancel', cancel, opts);
+    return () => {
+      window.removeEventListener('pointerdown', down, opts);
+      window.removeEventListener('pointermove', move, opts);
+      window.removeEventListener('pointerup', up, opts);
+      window.removeEventListener('pointercancel', cancel, opts);
+    };
+  }, [guard, arrival]);
+  return guard;
 }

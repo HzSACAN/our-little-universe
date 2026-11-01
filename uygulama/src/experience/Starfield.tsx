@@ -24,27 +24,47 @@ uniform float uPixelRatio;
 uniform float uScale;
 varying vec3 vColor;
 varying float vAlpha;
+varying float vCore;
+varying float vBright;
 void main(){
   vec4 mv=modelViewMatrix*vec4(position,1.);
   gl_Position=projectionMatrix*mv;
   float size=aSize*uScale/max(1.,-mv.z);
-  gl_PointSize=clamp(size,1.1,9.)*uPixelRatio;
+  // Görsel hiyerarşi: sayısız küçük, keskin nokta; seçilmiş az sayıda parlak yıldız
+  // ince dört kollu bir parıltı taşır (kolların sığması için daha büyük nokta alanı).
+  // Parlak yıldızların yalnız küçük, rastgele bir bölümü (faz ile seçilir) parıltı taşır.
+  float bright=step(8.5,aSize)*step(5.75,aPhase);
+  float core=clamp(size,1.,mix(3.2,5.5,bright));
+  float sprite=core*mix(2.,7.5,bright);
+  gl_PointSize=sprite*uPixelRatio;
+  vCore=core/sprite;
+  vBright=bright;
   // Bütün gökyüzü aynı ritimde parlamaz: yalnızca bir kısmı yavaşça titrer.
   float tw=aPhase>3.5?.72+.28*sin(uTime*(.4+aPhase*.08)+aPhase*7.):1.;
   vColor=aColor;
-  vAlpha=tw*clamp(size/1.4,.25,1.);
+  vAlpha=tw*clamp(size/1.4,.3,1.);
 }
 `;
 
 const pointFragment = /* glsl */ `
 varying vec3 vColor;
 varying float vAlpha;
+varying float vCore;
+varying float vBright;
 void main(){
   vec2 c=gl_PointCoord-.5;
   float d=length(c)*2.;
-  float core=exp(-d*d*7.);
-  float halo=exp(-d*3.2)*.25;
-  float a=(core+halo)*(1.-smoothstep(.85,1.,d));
+  // Çekirdek, nokta alanının yalnız vCore kadarı: küçük yıldızlar yayvan leke değil, net nokta.
+  float k=d/vCore;
+  float core=exp(-k*k*2.6);
+  float halo=exp(-k*1.6)*.12;
+  float spikes=0.;
+  if(vBright>.5){
+    vec2 a=abs(c)*2.;
+    // İnce, uca doğru sönen dikey ve yatay kollar.
+    spikes=(exp(-a.x/vCore*3.2)*pow(max(1.-a.y,0.),3.)+exp(-a.y/vCore*3.2)*pow(max(1.-a.x,0.),3.))*.55;
+  }
+  float a=(core+halo+spikes)*(1.-smoothstep(.85,1.,d));
   gl_FragColor=vec4(vColor*a*vAlpha,1.);
 }
 `;

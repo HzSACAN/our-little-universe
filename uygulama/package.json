@@ -14,8 +14,9 @@
     "dogrula:etkilesim": "node scripts/interact.mjs && node scripts/keyboard.mjs",
     "dogrula:yolculuk": "node scripts/journey.mjs 1440 900 d masaustu && node scripts/journey.mjs 390 844 m telefon",
     "dogrula:ekranlar": "node scripts/viewports.mjs",
-    "dogrula:tur": "node scripts/tour.mjs 1440 900 d masaustu 1,2,3,4,5,6 && node scripts/tour.mjs 360 740 m telefon360 3,1,6,2,5,4",
-    "dogrula:mektup": "node scripts/letter.mjs"
+    "dogrula:tur": "node scripts/tour.mjs 1440 900 d masaustu 1,2,3,4,5,6 && node scripts/tour.mjs 360 740 m telefon360 3,1,6,2,5,4 && node scripts/tour.mjs 844 390 m yatay 6,5,4,3,2,1",
+    "dogrula:mektup": "node scripts/letter.mjs",
+    "dogrula:yildiz": "node scripts/star.mjs"
   },
   "dependencies": {
     "@react-three/fiber": "9.8.2",

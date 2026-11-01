@@ -1,6 +1,7 @@
 import { CubicBezierCurve3, Vector3 } from 'three';
 import type { StarId } from '../content/memories';
 import type { Layout } from './layout';
+import { yLayout } from './constellationGraph';
 export { layoutFor, type Layout } from './layout';
 
 // Dünya koordinatları sabittir. Ekran oranı değiştiğinde yıldızlar yer değiştirmez;
@@ -14,17 +15,31 @@ export interface StarBody {
   clearance: number;
 }
 
-export const stars: Record<StarId, StarBody> = {
-  // Konumlar, açılış kadrajında hikâye sırasıyla derinliğe doğru kıvrılan ve
-  // kendini kesmeyen bir halka oluşturacak biçimde seçildi (takımyıldız çizgileri
-  // birbirinin üzerinden geçmez). Telefon kadrajı aynı dünyaya ayrı bakar.
-  gold: { id: 'gold', position: new Vector3(72, -52, -300), radius: 14, clearance: 36 },
-  binary: { id: 'binary', position: new Vector3(-12, -249, -1150), radius: 11, clearance: 40 },
-  rose: { id: 'rose', position: new Vector3(-80, 116, -1650), radius: 13, clearance: 36 },
-  azure: { id: 'azure', position: new Vector3(173, 632, -2200), radius: 15, clearance: 40 },
-  violet: { id: 'violet', position: new Vector3(865, 895, -2850), radius: 13, clearance: 38 },
-  dawn: { id: 'dawn', position: new Vector3(1549, 370, -3700), radius: 17, clearance: 46 },
+/** Genel görünüm kamerasının göz noktası; Y takımyıldızı buradan okunur (constellationGraph.ts). */
+export const HOME_EYE = new Vector3(0, 20, 420);
+
+const radii: Record<StarId, [number, number]> = {
+  // [yarıçap, uçuş yolunun yaklaşabileceği en kısa mesafe]
+  gold: [14, 36],
+  binary: [11, 40],
+  rose: [13, 36],
+  azure: [15, 40],
+  violet: [13, 38],
+  dawn: [17, 46],
 };
+
+function bodyFor(id: StarId): StarBody {
+  const { u, v, distance } = yLayout[id];
+  const [radius, clearance] = radii[id];
+  return { id, position: new Vector3(u * distance, v * distance, -distance).add(HOME_EYE), radius, clearance };
+}
+
+// Konumlar, genel görünüm kamerasından bakınca Yağmur'un baş harfi Y'yi
+// oluşturacak biçimde Y düzeninden türetilir. Her yıldız farklı derinliktedir;
+// telefon kadrajı aynı göz noktasından, yalnız farklı yöne ve açıyla bakar.
+export const stars = Object.fromEntries(
+  (Object.keys(yLayout) as StarId[]).map((id) => [id, bodyFor(id)]),
+) as Record<StarId, StarBody>;
 
 /** Eş yıldızın ana yıldıza göre yörünge yarıçapı (ana yarıçap biriminde). */
 export const COMPANION_ORBIT = 2.7;
@@ -37,10 +52,19 @@ export interface CameraPose {
 
 export const baseFov = (layout: Layout) => (layout === 'portrait' ? 60 : 50);
 
+/**
+ * Bir duruştaki görüş açısı. Telefonun genel görünümü aynı göz noktasından biraz
+ * daha geniş bakar: Y biçimi değişmeden başlık ile metin arasına sığar.
+ */
+export const fovFor = (target: StarId | 'home', layout: Layout) =>
+  target === 'home' && layout === 'portrait' ? 75 : baseFov(layout);
+
 export function homePose(layout: Layout): CameraPose {
+  // Aynı göz noktası: Y biçimi iki düzende de aynı kalır. Masaüstünde metin
+  // solda olduğundan bakış Y'nin soluna, telefonda metin altta olduğundan aşağı döner.
   return layout === 'portrait'
-    ? { position: new Vector3(-123, -239, 700), target: new Vector3(210, -377, -1039) }
-    : { position: new Vector3(-60, 0, 300), target: new Vector3(-150, 20, -600) };
+    ? { position: HOME_EYE.clone(), target: HOME_EYE.clone().add(new Vector3(0, -270, -1000)) }
+    : { position: HOME_EYE.clone(), target: HOME_EYE.clone().add(new Vector3(-285, -12, -1000)) };
 }
 
 /**

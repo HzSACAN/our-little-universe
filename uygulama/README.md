@@ -1,59 +1,188 @@
-# Bizim Küçük Evrenimiz — altı yıldız, takımyıldız ve mektup
+# Bizim Küçük Evrenimiz — Y takımyıldızı, yıldıza dokunarak anılar ve mektup
 
-Hazret’ten Yağmur’a, 6 Kasım için. Renkli, üç boyutlu bir uzayda farklı derinliklerdeki **altı anı yıldızı** arasında kamera yolculuğu; keşfedilen komşu yıldızlar arasında açılan takımyıldız çizgileri ve altı farklı yıldız keşfedilince açılan mektup. Tüm anı metinleri, fotoğraf alanları ve mektup açıkça **örnektir**; gerçek anılar, fotoğraflar, mektup ve ilişkinin başlangıç yılı verilmedi ve uydurulmadı.
+Hazret’ten Yağmur’a, 6 Kasım için. Renkli, üç boyutlu bir uzayda farklı derinliklerdeki **altı anı yıldızı** arasında kamera yolculuğu. Genel görünümde altı yıldız, Yağmur’un baş harfi olan bir **Y** takımyıldızı oluşturur; anılar **yıldızın kendisine dokunarak** açılır; altı farklı yıldız keşfedilince mektup açılır.
 
-Bu sürüm, Codex’in `74d07a4` kontrol noktasından devam edilerek görsel olarak iyileştirildi ve gerçek WebGL2 sahnesinde doğrulandı (ayrıntılar aşağıda). Önceki iki yıldızlık pilotun ölçümleri en altta **tarihsel kayıt** olarak duruyor.
+Tüm anı metinleri, fotoğraf alanları ve mektup hâlâ açıkça **örnektir**. Gerçek anılar, fotoğraflar, mektup ve ilişkinin başlangıç yılı verilmedi ve uydurulmadı (bkz. “İçerik bekleyenler”).
+
+Geliştirme `main` dalında sürüyor; önceki `fix/pilot-review-2026-10-31` dalı (PR #1) `main`’e birleştirildi. Önceki sürümlerin kayıtları en altta **tarihsel kayıt** olarak duruyor.
 
 ## Çalıştırma
 
 Gereken: Node 20.19+ / 22.12+ ve pnpm.
 
 ```bash
-pnpm install
+pnpm install --frozen-lockfile
 pnpm dev            # http://localhost:5173
 pnpm typecheck      # TypeScript kontrolü
-pnpm test           # durum makinesi, rota ve içerik testleri
+pnpm test           # durum makinesi, dokunuş koruması, Y grafiği, rota ve kadraj testleri
 pnpm build          # tip kontrolü + üretim derlemesi (dist/)
 pnpm preview        # üretim derlemesi: http://localhost:4173
 ```
 
 Telefonda yerel ağdan denemek için `pnpm dev:host` (veya `pnpm build` ardından `pnpm preview:host`) ve komutun yazdırdığı yerel ağ adresini kullanın.
 
-Ölçüm: adrese `?olcum` eklenirse arayüzde hiçbir şey görünmez; tarayıcı konsolunda `window.__olcum()` son frame sürelerini (p50/p95/p99), kalite kademesini, çizim çağrısı ve GPU kaynak sayılarını verir. `?olcum&kapat=nebula,post` gibi katmanlar tek tek kapatılabilir.
+Ölçüm: adrese `?olcum` eklenirse arayüzde hiçbir şey görünmez; tarayıcı konsolunda `window.__olcum()` son frame sürelerini (p50/p95/p99), kalite kademesini, çizim çağrısı ve GPU kaynak sayılarını verir. `?olcum&kapat=nebula,post` katmanları kapatır; `?olcum&kademe=high|medium|low` kademeyi sabitler ve kalite yöneticisini devre dışı bırakır (yalnız ölçüm içindir).
 
-Otomatik tarayıcı kontrolleri (yerelde Chrome gerekir; `CHROME` ve `BASE` ortam değişkenleriyle ayarlanır, çıktı `scripts/.cikti/`):
+### Otomatik tarayıcı kontrolleri
+
+Yerelde Chrome ve **gerçek WebGL2 GPU’su** gerekir (`CHROME` ve `BASE` ortam değişkenleri; çıktı `scripts/.cikti/`). Üretim derlemesiyle: `BASE=http://localhost:4173`.
 
 ```bash
-pnpm dogrula:tur        # altı yıldız turu, genel görünüm, etiket çakışması, ölçüm
+pnpm dogrula:yildiz     # yıldıza dokunma: fare/dokunma, sürükleme, çoklu dokunma, touchcancel, eş yıldız, odak
+pnpm dogrula:ekranlar   # 360/430/844 ve masaüstü: taşma, 44 px, ipucu ve etiket çakışması, anı geçişi
+pnpm dogrula:tur        # altı yıldız turu farklı sıralarla, Y genel görünümü, etiket çakışması
 pnpm dogrula:mektup     # mektup kilidi, anıdan mektuba, Escape/odak, bağlam kaybı, WebGL yedeği
-pnpm dogrula:etkilesim  # hızlı seçim, sürükleme, uçuşta boyut değişimi, gizli sekme, hareket azaltma
-pnpm dogrula:ekranlar   # 360/430/844 ve masaüstünde taşma ve 44 px hedefleri
+pnpm dogrula:etkilesim  # hızlı seçim, sürükleme, uçuşta boyut değişimi, gizli sekme, hareket azaltma, klavye
 ```
+
+Her kontrol `GEÇTİ`/`KALDI` yazar; **tek bir `KALDI`, rapor edilen taşma/küçük hedef/çakışma, uygulama konsol hatası ya da betiğin yarıda kesilmesi komutu 1 ile bitirir** (`scripts/check.mjs`). Hata yolu: `node scripts/check.mjs --hata-yolu` bilerek başarısız olur ve 1 döndürür. Ayrıca: `scripts/perf.mjs` (sabit kademede uçuş ölçümü), `scripts/compare.mjs` (önce/sonra kareleri), `scripts/video.mjs` (kabul videosu, ffmpeg gerekir).
+
+### Sürekli entegrasyon
+
+`.github/workflows/ci.yml`: `main`’e her push’ta ve PR’larda kilitli kurulum (`pnpm install --frozen-lockfile`), tip kontrolü, birim testleri, üretim derlemesi ve doğrulama yardımcısının hata yolunun 1 ile çıktığı kontrol edilir. **GitHub Actions’ta GPU yoktur; `dogrula:*` tarayıcı kontrolleri CI’da çalışmaz** ve CI sonucu onların geçtiği anlamına gelmez. Onlar aşağıdaki yerel makinede çalıştırıldı.
 
 ## Teknoloji
 
-React 19.3 · TypeScript 7 · Vite 8 · three 0.186 · @react-three/fiber 9.8 · @react-three/postprocessing 3.2 (postprocessing 6.39). Sürümler sabitlendi, `pnpm-lock.yaml` kilitli. three 0.187 yerine 0.186: postprocessing 6.39 eş bağımlılığı `three < 0.187` istiyor. Drei ve GSAP kullanılmadı. Kamerayı tek bir denetleyici yönetiyor. Yeni bağımlılık eklenmedi.
+React 19.3 · TypeScript 7 · Vite 8 · three 0.186 · @react-three/fiber 9.8 · @react-three/postprocessing 3.2 (postprocessing 6.39). Sürümler sabitlendi, `pnpm-lock.yaml` kilitli. three 0.187 yerine 0.186: postprocessing 6.39 eş bağımlılığı `three < 0.187` istiyor. Drei ve GSAP kullanılmadı. Kamerayı tek bir denetleyici yönetiyor. Bu sürümde yeni bağımlılık eklenmedi.
 
 ## Dosyalar ve sorumlulukları
 
 | Dosya | Sorumluluk |
 |---|---|
-| `src/content/memories.ts`, `letter.ts` | Altı örnek anı, benzersiz keşif kontrolü, sabit hikâye sırasındaki takımyıldız kenarları, örnek mektup. |
-| `src/experience/state.ts` | Deneyim durumu: `intro → travelling → arrived / overview`, ziyaretler, mektup kilidi, yedek akışta keşif, uçuş kimliği (eski uçuş durumu yazamaz). |
-| `src/experience/world.ts` | Sabit dünya koordinatları (açılış kadrajında kendini kesmeyen bir halka), masaüstü/telefon kadrajları, yıldızlara çarpmayan 3B uçuş eğrisi. |
-| `src/experience/CameraRig.tsx` | Kameranın tek sahibi: uçuş, bakış geçişi, FOV genişlemesi, sınırlı bakınma, yeniden hedefleme, hareket azaltma. |
-| `src/experience/MemoryStars.tsx` | Altı yıldızın yüzeyi ve koronası: altın/pembe granülasyon, ikili yıldızın akan bantları ve eş yıldızı, turkuaz plazma iplikleri, mor dev konveksiyon hücreleri, şafak yıldızının altından pembeye iki tonu. |
-| `src/experience/Beacons.tsx` | Uzak yıldızlar için kendi renginde, en az birkaç düzine piksellik ışınlı parıltı; yaklaşınca söner. |
-| `src/experience/Constellation.tsx` | Keşfedilen komşular arasında açılan çizgiler; korona kenarından başlar, yüzeyin önünden geçmez. |
-| `src/experience/LabelProjector.tsx` | Etiketleri gerçek projeksiyonla konumlar; çakışmada etiketi yıldızın altına, üstüne veya yanına alır; başlık ve gezinme alanından kaçınır. |
-| `src/experience/Nebula.tsx` + `nebulaLayout.ts` | Kıvrımlı damarlar boyunca hacim parçacıkları; derin bölümdeki yıldızların çevresi ve geçitleri dahil. |
-| `src/experience/Sky.tsx`, `Starfield.tsx`, `noiseTexture.ts` | Küp dokuya pişirilen uzak ışık, katmanlı yıldız alanı, yakın toz, bulutsu gürültü dokusu. |
+| `src/content/memories.ts`, `letter.ts` | Altı örnek anı ve **hikâye sırası**, benzersiz keşif kontrolü, örnek mektup. Görsel koddan ayrıdır; gerçek içerik buraya gelecek. |
+| `src/experience/constellationGraph.ts` | **Y takımyıldızı**: yıldızların Y’deki rolü, genel görünüm göz noktasından yön/uzaklık düzeni ve hikâye sırasından bağımsız beş kenarlı bağlantı grafiği. |
+| `src/experience/state.ts` | Deneyim durumu: `intro → travelling → arrived / overview`, ziyaretler, mektup kilidi, `touchStar` (uzak yıldız → yolculuk, bulunulan yıldız → anı), varış kimliği, anısı açılmış yıldızlar. |
+| `src/experience/tapGuard.ts` | Dokunuş koruması: sürükleme, pointercancel, çoklu dokunma ve varıştan önce başlayan basış anı açmaz. |
+| `src/experience/world.ts` | Y düzeninden türetilen sabit dünya koordinatları, masaüstü/telefon kadrajları ve görüş açıları, yıldızlara çarpmayan 3B uçuş eğrisi. |
+| `src/experience/CameraRig.tsx` | Kameranın tek sahibi: uçuş, bakış ve görüş açısı geçişi, sınırlı bakınma, yeniden hedefleme, hareket azaltma. |
+| `src/experience/MemoryStars.tsx` | Altı yıldızın yüzeyi ve koronası; davet halkası, hover/odak tepkisi, anı açılırken korona genişlemesi ve yayılan ışık dalgası; eş yıldızın dünya konumu. |
+| `src/experience/LabelProjector.tsx` | Etiketleri, bulunulan yıldızın erişilebilir dokunma hedefini (eş yıldız dahil) ve ipucunu gerçek projeksiyonla konumlar; metin, başlık ve gezinmeden kaçınır. |
+| `src/experience/Nebula.tsx`, `nebulaLayout.ts`, `noiseTexture.ts` | Y çevresindeki damarlar boyunca hacim parçacıkları; damar başına ortak dünya gaz alanı, sırt filamentleri, toz şeritleri, renk korumalı ton sıkıştırma; 4 kanallı 3B gürültü dokusu. |
+| `src/experience/Sky.tsx`, `Starfield.tsx`, `Beacons.tsx` | Küp dokuya pişirilen koyu lacivert zemin; keskin küçük yıldızlar ve seçilmiş az sayıda dört kollu parıltı; yakın toz; uzak anı yıldızlarının parıltısı. |
+| `src/experience/Constellation.tsx` | Y kenarlarını iki ucu keşfedilince, korona kenarından başlayarak açar. |
 | `src/experience/Scene.tsx`, `quality.ts`, `timing.ts` | Tek Canvas, bloom + ACES + vinyet, bağlam kaybı, kalite yöneticisi, ölçüm kancası. |
-| `src/App.tsx`, `src/ui/*`, `src/styles.css` | HTML arayüz: açılış, varış ve tamamlanma panelleri, altı duraklı gezinme, anı/liste/mektup dialogları, WebGL yedeği; masaüstü ve telefon için ayrı yerleşim. |
-| `scripts/*.mjs` | Headless Chrome ile gerçek GPU’da otomatik kontroller ve ekran görüntüleri. |
-| `docs/ekranlar-alti-yildiz/` | Bu sürümün WebGL2 ekran görüntüleri. `docs/ekranlar/` iki yıldızlık pilota aittir. |
+| `src/App.tsx`, `src/ui/*`, `src/styles.css` | HTML arayüz; `ui/StarTarget.tsx` yıldızın erişilebilir hedefi ve ipucu; `ui/Dialogs.tsx` yıldızdan doğan/oraya dönen anı geçişi. |
+| `scripts/*.mjs` | Headless Chrome ile gerçek GPU’da otomatik kontroller, ölçüm, ekran görüntüsü ve video. |
+| `docs/ekranlar-y-surumu/` | Bu sürümün önce/sonra karşılaştırmaları, kabul kareleri ve videoları. Eski klasörler önceki sürümlere aittir. |
 
-## Bu sürümde yapılanlar (Claude, 31 Ekim 2026)
+## Bu sürümde yapılanlar (Claude, 1 Kasım 2026)
+
+### 1. Bulutsu: sütlü/pastel bulanıklığın gerçek nedenleri
+
+Yalnız bloom, doygunluk veya çözünürlük artırılmadı. Kodda bulunan nedenler ve düzeltmeleri:
+
+| Neden | Etki | Düzeltme |
+|---|---|---|
+| Her parçacık **kendi rastgele tohumuyla** gürültü örnekliyordu. | Üst üste binen yüzlerce parçacığın deseni birbirini ortalıyor, kontrast düşüp sütlü bir sise dönüşüyordu (asıl neden). | Aynı damarın bütün parçacıkları **ortak, dünyaya bağlı bir gaz alanının** kesitlerini gösterir; parçacık yalnız maske olur. Üst üste binen kesitler aynı yapıyı güçlendirir. Alan ölçeği damar başına (70–360 birim). |
+| Tek yumuşak yoğunluk eğrisi, her yerde emisyon. | Koyu boşluk yok, her yer pus. | Büyük ölçekli kapsama alanı damar içinde de düzensiz koyu boşluklar açar; boş bölgede pahalı ayrıntı hesaplanmaz (erken `discard`). |
+| İnce yapı yalnız fbm’in yüksek oktavlarındaydı. | Büyütmede kayboluyordu. | İki ölçekte **sırt (ridged) gürültü** ile ince, keskin ışıklı filamentler; büyük gövde içinde ışıyan çekirdek katmanı. |
+| Toplamsal karışım hiçbir şeyi karartamıyordu. | Koyu toz şeridi yoktu. | Alfa kanalı toz yoğunluğu olarak toplanır; birleştirme `bulutsu + gökyüzü × (1 − toz)`; gaz kendi tozuyla da kesilir. |
+| Yoğun bölgeler 1,0’ı aşıp bloom eşiğine ve ACES beyazlatmasına taşıyordu. | Parlak bölgeler beyaza düzleşip ayrıntı bloom altında kayboluyordu. | Birleştirmede **renk korumalı yumuşak sıkıştırma** (en yüksek kanal ≤ 0,9): bulutsu bloom eşiğinin altında kalır, ışımayı yalnız yıldızlar yapar. |
+| Ara hedef 0,6 / 0,5 / 0,34 çözünürlükte bilineer büyütülüyordu. | Ek bulanıklık. | 0,7 / 0,65 / 0,5 ve dört komşulu hafif keskinleştirme. Asıl kazanç çözünürlükten değil yukarıdaki alan değişikliğinden gelir. |
+| Gökyüzü küp dokusu her yeri yumuşak mor bir pusla dolduruyordu. | Pastel zemin. | Zemin çoğunlukla koyu lacivert boşluk; renkli bölgeler ince ölçekle kümelere bölündü, toz damarları koyulaştı. |
+
+Gürültü dokusu dört kanallı yapıldı (aynı alanın hücre boyundan uzak kaydırılmış kopyaları); parça başına doku okuması 13’ten 9’a indi. Kademeler: yüksek 5 oktav, orta 4, düşük 3; filament ve toz sırtları oktav sayısından bağımsız olduğundan **düşük kademede de ana filament yapısı korunur**. Bulutsular dünya içindeki farklı derinliklerde kalır; uçuşta paralaks ve yakın tül katmanları sürer. Yıldız alanında küçük yıldızlar net noktalar; parlak yıldızların yalnız küçük bir alt kümesi ince dört kollu parıltı taşır.
+
+### 2. Anılar yıldıza dokunarak açılıyor
+
+- Varış panelindeki “Anıyı aç” düğmesi kaldırıldı. Genel görünümde veya başka yıldızdayken uzak yıldıza (etiketine ya da kanvastaki gövdesine) dokunmak yolculuk başlatır; varıştan sonra bulunulan yıldıza dokunmak anıyı açar (`touchStar`). Önceden bulunulan yıldıza seçim reducer’da sessizce yok sayılıyordu; şimdi bu durum açıkça anı açmaya yönlenir.
+- Dokunuşun başladığı andaki **varış kimliği** saklanır: yolculuğu başlatan ya da varıştan önce başlayan basış varışta anıyı açmaz; anı kendiliğinden de açılmaz. Sürükleme (>10 px), pointercancel ve ikinci parmak dokunuşu açmaz; uçuş sırasında yıldız hedefi yoktur ve reducer kilitlidir.
+- İkili yıldızın ana gövdesi ve eş yıldızı (ayrı ≥44 px alan) aynı anıyı açar.
+- **Erişilebilir HTML karşılığı:** yıldızın ekrandaki diskine oturan, en az 44 px’lik düğme (“Anıyı aç: başlık. Yıldıza dokun, anımızı keşfet.”); klavye odağı, Enter/Space; hover’da ince halka, odakta altın halka. Varıştan sonra Tab sırası başlıktan yıldıza geçer. WebGL yedeğindeki açık metin düğmeleri korundu.
+- **Yönlendirme:** varıştan ~0,7 sn sonra yıldızın yanında, yüzeyi, metni ve gezinmeyi kapatmayan bir yana yerleşen kısa ipucu — dokunmatikte “Bu yıldızda bir anımız saklı. Dokun.”, masaüstünde “Bu yıldızda bir anımız saklı. Yıldıza dokun, anımızı keşfet.” Koronada nefes alan ince bir ışık halkası. Anı bir kez açıldıktan sonra ipucu ve davet halkası o yıldızda tekrarlanmaz.
+
+### 3. Anının açılış geçişi
+
+Yüzeyde kısa ışık tepkisi ve kontrollü korona genişlemesi → yüzeyden yayılan ince ışık dalgası ve seyrek kıvılcımlar (~1 sn) → ~0,3 sn sonra anı kartı yıldızın ekrandaki konumundan büyüyerek doğar; sahne hafifçe geri çekilip kararır. Kapanışta (✕, Escape, dışarı dokunma) kart aynı yıldıza küçülerek döner; bakış açılışta yıldıza yeniden yerleştiği için aynı kamera kadrajına dönülür. Sert beyaz flaş veya kamera sarsıntısı yok. Hızlı tekrar dokunma tek dialog bırakır (reducer kilidi ve açılıştan sonraki 650 ms’de dışarı dokunmanın yok sayılması). Hareket azaltmada ışık efektleri yok, kart sade bir solmayla açılır/kapanır. Odak dialoga girer, Escape kapatır, odak yıldızın erişilebilir hedefine döner (Safari’de tıklanan düğme odak almasa bile yedek hedef var); anıdan mektuba geçiş tek dialog bırakır.
+
+### 4. Y takımyıldızı
+
+- Altın (gövde ucu) → ikili → pembe (çatal) gövdeyi; turkuaz → mor sol kolu; şafak sağ kolu oluşturur. Hikâye sırası (`memories.ts`) ile bağlantı grafiği (`constellationGraph.ts`) ayrıdır; eski halkanın son yıldızdan ilkine kapanış kenarı yoktur.
+- Konumlar, genel görünüm göz noktasından yön ve uzaklıkla tanımlanır; yıldızlar 700–3800 birim arasında **farklı derinliklerde** kalır, Y ekrana çizilmez ve uçuşta derinliği açığa çıkar. Hafif asimetri ve düzensiz aralıklar bilinçlidir. Masaüstü ve telefon aynı göz noktasından bakar (şekil bozulmaz): masaüstünde Y sağda; telefonda başlık ile metin arasında, biraz daha geniş görüş açısıyla.
+- Bir kenar iki ucu keşfedilince açılır; farklı ziyaret sıraları her adımda aynı kenar kümesini ve aynı nihai Y’yi üretir. Mektup altı farklı keşifle açılır; belirli bir sıraya veya son numaralı yıldıza bağlı değildir.
+- Testler: ağaç yapısı (5 kenar, döngü yok, tek çatal), 40 rastgele sırada önek eşitliği, kapanış kenarının yokluğu; altı ekran oranında Y okunurluğu (gövde yaklaşık dikey, kollar 55–110° açılır, kol/gövde oranı, kesişme yok, yıldızlar arası ≥ ~55 px, masaüstünde sağ yarı, telefonda başlık ile metin arası) ve 84 yönlü uçuş rotası.
+
+### 5. Teknik eksikler
+
+- `scripts/check.mjs`: bütün doğrulama betikleri başarısızlıkları sayar ve 1 ile biter; taşma, küçük hedef, etiket/ipucu çakışması ve uygulama konsol hatası otomatik başarısızlıktır; beklenmeyen istisna da başarısızlıktır ve tarayıcı her durumda kapanır. Chrome başlatılamazsa açık hata verir.
+- Hata yolu gerçekten doğrulandı: `node scripts/check.mjs --hata-yolu` 1 döndürür; ayrıca geliştirme sırasında `dogrula:etkilesim` ve `dogrula:mektup` gerçek birer başarısızlıkta 1 ile bitti (aşağıda).
+- GitHub Actions temel CI eklendi (yukarıda). Diğer düzeltmeler: ilk çizim ile resize dinleyicisi arasında kaçan boyut değişimi; açılış metninin etiket yerleştirmede engel sayılmaması.
+
+## Doğrulananlar (bu sürüm)
+
+Ortam: Windows 11, AMD Radeon entegre GPU (Renoir, ANGLE/Direct3D11), Chrome headless gerçek GPU yolu, üretim derlemesi (`pnpm build` + `pnpm preview`). Canvas `data-renderer="webgl2"`. Ekran 75 Hz olduğundan **13,3 ms tabandır**.
+
+- `pnpm typecheck` ✔ · `pnpm test` ✔ **141/141** (7 dosya) · `pnpm build` ✔ (başlangıç JS gzip ≈79 kB, sahne gzip ≈284 kB)
+- `dogrula:yildiz` **34/34**: uzak yıldıza dokunma yolculuk başlatır; uçuşta hedef yok; varışta anı kendiliğinden açılmaz; ipucu görünür, yüzeyi ve paneli kapatmaz; yıldızda başlayan sürükleme açmaz; hover halkası; dokunma anıyı açar, hızlı ikinci dokunma tek dialog bırakır; kart yıldızdan doğar, ✕ ile yıldıza döner, odak yıldız hedefine döner; ipucu tekrarlanmaz; Space/Enter; eş yıldız ve ana gövde aynı anıyı açar; varıştan önce başlayan basış açmaz; genel görünümde uzak yıldıza dokunma; hareket azaltmada solma; telefonda iki parmak, dokunarak sürükleme ve touchcancel açmaz, tek dokunma açar.
+- `dogrula:ekranlar` **156/156**: 360×740, 430×932, 844×390, 1440×900, 1920×1080’de açılış, varış (ipucu dahil), ikili yıldız ve Y genel görünümünde yatay taşma yok, görünür düğmeler ≥44 px, panel/gezinme çakışması yok, etiketler birbirleriyle ve metinle çakışmıyor, ipucu taşmıyor/çakışmıyor; her görünümde gerçek fare/dokunma girdisiyle yıldıza dokunma anıyı açtı ve kart taşmadı.
+- `dogrula:tur`: 1→6 (1440×900), 3,1,6,2,5,4 (360×740) ve 6,5,4,3,2,1 (844×390) sıralarında mektup yalnız altıncı farklı keşifte açılabiliyor; Y genel görünümünde altı etiket görünür ve çakışmasız; konsol temiz.
+- `dogrula:mektup` **26/26**, `dogrula:etkilesim` **23/23**, klavye **10/10**.
+- Gizli sekme kontrolü (“gizliyken uçuş ≤ %2 ilerledi”) zamanlamaya duyarlı: bir çalıştırmada %2,03 ile **KALDI** ve komut 1 ile bitti; iki tekrarda %1,2 ve %0,6 ile geçti. İlerleme sekme gizlenene kadar geçen birkaç kareden geliyor; gizliyken uçuş duruyor. Eşik değiştirilmedi.
+- Geliştirme sırasında `dogrula:mektup` 4 KALDI ile 1 döndürdü (betik, yıldız hedefi ilk karede konumlanmadan odaklanıyordu; betik düzeltildi, uygulama davranışı doğru).
+
+### Ölçülen performans — bu sürüm (yeni bulutsu)
+
+`scripts/perf.mjs`, sabit kademe (`?olcum&kademe=…`), uçuş sırasında, dört uçuşun aralığı. GPU kaynakları sabit kaldı (12–13 geometri; 20/16/12 doku; 13–14 program; tur boyunca yalnız açılan Y kenarları kadar geometri artışı).
+
+| Görünüm | Kademe / DPR | p50 | p95 | Not |
+|---|---|---:|---:|---|
+| 1440×900 | yüksek / 1 | 14,5–19,4 ms | 21,7–27,9 ms | entegre GPU’da kalite yöneticisi zaman zaman ortaya indiriyor |
+| 1440×900 | düşük / 1 | 13,3 ms | 13,7–13,8 ms | |
+| 1920×1080 | yüksek / 1 | 22,4–29,3 ms | 32,6–46 ms | bu GPU’da sürdürülemez; yönetici iner |
+| 1920×1080 | orta / 1 | 13,5–15,1 ms | 20,6–21,8 ms | |
+| 390×844 telefon emülasyonu | orta / 1,35 | 13,3 ms | 13,6–13,7 ms | **masaüstü GPU’sunda emülasyon; telefon ölçümü değildir** |
+| 390×844 telefon emülasyonu | düşük / 1 | 13,3 ms | 13,7–13,8 ms | aynı not |
+
+### Aynı betikle önceki sürüm (5d412ab, kalite yöneticisi açık)
+
+| Görünüm | Kademe | p50 | p95 |
+|---|---|---:|---:|
+| 1440×900 | yüksek | 13,4–13,9 ms | 17,2–27,7 ms |
+| 1920×1080 | yüksek → orta | 13,3–25,8 ms | 15,1–39,8 ms |
+| 390×844 emülasyon | orta | 13,3 ms | 13,7–13,8 ms |
+
+Sonuç: yeni bulutsu bu entegre GPU’da yüksek kademede 1440’ta p50’yi ~1–5 ms artırıyor; 1920’de önceki sürüm gibi orta kademeye iniliyor ve orada akıcı. Telefon kademeleri emülasyonda tabanda. Gerçek telefon GPU’sunda ölçüm yapılmadı.
+
+## Görsel kabul malzemesi
+
+`docs/ekranlar-y-surumu/`:
+
+- `once-sonra-<masaustu|telefon>-<1..6>.jpg`: aynı betik, aynı GPU ve aynı adımlarla **solda önceki sürüm (5d412ab), sağda bu sürüm**: açılış, altına uçuşun ortası, altın varış, ikiliye uçuşun ortası, ikili varış, genel görünüm. Açılış ve genel görünüm kareleri Y düzeni nedeniyle bilerek farklı kadrajdadır; varış kareleri aynı yıldız kadrajındadır. “Sonra” kareleri, kalite yöneticisinin o çekimde seçtiği **orta** kademededir.
+- `v-*`: 360×740 açılış ve Y, 430×932 ipucu ve anı kartı, 844×390 ipucu ve Y, 1440×900 ipucu ve anı kartı, 1920×1080 Y; `s-*`: yıldıza dokunarak açılan anı (masaüstü ve telefon).
+- `video-masaustu-ucus-dokunma-ani.mp4`, `video-telefon-ucus-dokunma-ani.mp4` (~26 sn, gerçek hızda): açılış → uçuş → varış ipucu → yıldıza dokunma → ışık dalgası ve kartın yıldızdan doğması → kapanış → ikili yıldıza uçuş → genel görünüm. Bulutsu ayrıntısının uçuş sırasında korunduğu buradan izlenebilir.
+
+**Görsel kabul Hazret’e aittir**; bu dosyalar kabul değil, kabul için malzemedir.
+
+## Bekleyenler
+
+### Gerçek cihazda bekleyenler
+
+Gerçek iPhone/Safari ve Android cihaza erişim olmadı; masaüstü emülasyonu gerçek cihaz kabulü sayılmadı. Kısa manuel kontrol (aynı Wi-Fi’de, `pnpm build` ardından `pnpm preview:host`, yazdırılan ağ adresi):
+
+1. Açılış: Y başlık ile metin arasında okunuyor mu, etiketler çakışıyor mu? Telefonu yatay çevirip tekrar bakın.
+2. “Yolculuğumuza başla”: uçuş akıcı mı (takılma, uzun donma)? Bulutsu uçuşta ayrıntılı mı?
+3. Varışta “Bu yıldızda bir anımız saklı. Dokun.” görünüyor mu; yıldızı veya metni kapatıyor mu?
+4. Yıldızda başparmakla sürükleyin → anı açılmamalı; iki parmakla dokunun → açılmamalı; tek dokunun → ışık dalgası ve kart yıldızdan açılmalı. Çabuk iki kez dokunun → tek kart.
+5. Kartı ✕ ile kapatın → kart yıldıza dönmeli. İkili yıldızda küçük pembe eş yıldıza dokunun → aynı anı.
+6. “Hareketi azalt” (iOS) / “Animasyonları kaldır” (Android) açıkken sayfayı yenileyip bir anı açın → sade solma.
+7. iPhone’da VoiceOver ile yıldız hedefi “Anıyı aç: …” diye okunuyor ve çift dokunmayla açılıyor mu?
+8. Mümkünse `?olcum` ile açıp Safari Web Inspector / Chrome uzak hata ayıklamada `window.__olcum()` sonucunu (kademe, p50/p95) not edin.
+
+### İçerik bekleyenler
+
+Gerçek anılar, fotoğraflar ve mektup gelmedi; bu bölüm tamamlanmış sayılmadı. İçerik `src/content/memories.ts` ve `letter.ts`’e, fotoğraflar `public/` altına (mobil/masaüstü kadrajı, boyut, gecikmeli yükleme ve alternatif metinle) eklenecek; örnek etiketleri yalnız gerçek içerikle değiştirilen alanlardan kaldırılacak. Tarih, başlangıç yılı, olay veya söz uydurulmadı.
+
+### Görsel kabul bekleyenler
+
+Bulutsu yoğunluğu ve renk dengesi, toz şeritlerinin miktarı, parıltılı yıldız sayısı, ipucunun konumu ve dili, anı geçişinin süresi, Y’nin biçimi (özellikle kol açıları ve telefondaki boyutu). Bilinen: R3F kaynaklı `THREE.Clock` kullanım dışı uyarısı sürüyor.
+
+---
+
+## Tarihsel kayıt — altı yıldızlı halka sürümü (5d412ab, 31 Ekim 2026)
+
+Aşağıdakiler önceki sürüme aittir; bu sürümün sonucu değildir. Takımyıldız o sürümde halkaydı ve anılar “Anıyı aç” düğmesiyle açılıyordu.
+
+### O sürümde yapılanlar
 
 - **Genel görünüm yeniden kurgulandı.** Önceki konumlarda uzak yıldızlar sağ üstte kümeleniyor ve takımyıldız çizgileri birbirini kesiyordu. Altı yıldız, açılış kadrajında hikâye sırasıyla derinliğe doğru kıvrılan, kendini kesmeyen bir halka oluşturacak biçimde yeniden yerleştirildi (z derinlikleri korundu). Telefon için aynı dünyaya ayrı bir kamera kadrajı, etiket kutuları da hesaba katılarak arandı.
 - **Uzak yıldız parıltıları** eklendi: genel görünümde her yıldız kendi renginde okunuyor, yaklaşınca gerçek yüzey görünür oluyor.
@@ -63,7 +192,7 @@ React 19.3 · TypeScript 7 · Vite 8 · three 0.186 · @react-three/fiber 9.8 ·
 - **Telefon yerleşimi:** açılışta “02” etiketinin “HAZRET’TEN YAĞMUR’A” satırıyla çakışması giderildi. Telefonda ve alçak yatay ekranda tamamlanma paneli kısaltıldı; “Sana bir mektup” düğmesi artık iki kez görünmüyor. Telefon etiketleri kompakt; dokunma hedefi halkanın kendisi (en az 44 px).
 - Derin bölge için yeni bulutsu damarları; yıldız alanı yeni konumlara genişletildi; ölçüm çıktısına kalite kademesi eklendi; altı yıldız ve mektup için yeni kontrol betikleri (`tour.mjs`, `letter.mjs`).
 
-## Doğrulananlar (bu sürüm)
+### O sürümde doğrulananlar
 
 Ortam: Windows 11, AMD Radeon entegre GPU (Renoir, ANGLE/Direct3D11), Chrome headless, gerçek GPU yolu. Çalışan sayfanın bu derlemenin dosyalarını yüklediği `performance` kayıtlarıyla doğrulandı (ör. `index-DEHxHtAj.js` / `Scene-QEL0vkjB.js`; hash’ler her derlemede değişir). Canvas `data-renderer="webgl2"`. Konsolda uygulama hatası ve shader derleme hatası yok.
 
@@ -78,7 +207,7 @@ Ortam: Windows 11, AMD Radeon entegre GPU (Renoir, ANGLE/Direct3D11), Chrome hea
 - WebGL bağlam kaybı: yedek okuma görünümüne geçiyor, 6/6 ziyaret korunuyor; “Gökyüzünü yeniden dene” WebGL2 sahnesini yeniden kuruyor ve ziyaretler korunuyor. Bu sırada three’nin kendi “Context Lost” ve “WEBGL_lose_context extension not supported” uyarıları konsola düşüyor.
 - WebGL yokken: altı anı okunarak 5/6’da mektup kilitli, aynı anı tekrar sayılmıyor, altıncıda mektup açılıyor; Escape ile kapanıp odak mektup düğmesine dönüyor.
 
-### Ölçülen performans (bu sürüm, üretim derlemesi, uçuş sırasında)
+#### O sürümün ölçülen performansı (üretim derlemesi, uçuş sırasında)
 
 | Görünüm | Kademe / DPR | p50 | p95 | GPU kaynakları |
 |---|---|---:|---:|---|
@@ -87,23 +216,6 @@ Ortam: Windows 11, AMD Radeon entegre GPU (Renoir, ANGLE/Direct3D11), Chrome hea
 | 390×844 telefon emülasyonu | orta / 1,35 | 13,3 ms | 13,6–13,8 ms | 18 / 16 / 14 |
 
 Dokuz uçuşluk turlarda (tamamlandıktan sonra üç tekrar ziyaret dahil) kaynak sayıları sabit kaldı; geometri artışı yalnız açılan altı takımyıldız çizgisinden ibaret. Çizim çağrısı 23–46. Bu headless Chrome ölçümleri **masaüstü entegre GPU’sundadır**; telefon emülasyonu telefon GPU’su ölçümü değildir.
-
-## Kalanlar ve test edilemeyenler
-
-- **Gerçek iPhone/Safari ve gerçek Android cihaz kontrolü yapılmadı**; mobil GPU performansı ölçülmedi. Telefon görünümleri masaüstü Chrome’da emüle edildi.
-- Ayrık GPU, yüksek DPR’lı (2+) masaüstü ekran ve Safari/Firefox masaüstü denenmedi.
-- Uçuş videosu kaydedilmedi; yerine ekran görüntüleri var.
-- Görsel kabul Hazret’e ait: renk yoğunluğu, yıldız yüzeyleri (özellikle turkuaz yıldızın sulu dokusu) ve takımyıldız halkasının biçimi geri bildirime açık.
-- Gerçek anılar, fotoğraflar, mektup metni ve başlangıç yılı geldiğinde `content/` dosyaları güncellenmeli; örnek etiketleri ancak o zaman kaldırılmalı.
-- R3F kaynaklı `THREE.Clock` kullanım dışı uyarısı sürüyor.
-
-## Nasıl değerlendirilmeli
-
-1. `pnpm build` ve `pnpm preview` ile açın; masaüstünde ve telefonda (yerel ağ) “Yolculuğumuza başla”.
-2. Yıldızları farklı sırayla gezin; uçuşta bulutsuların ve yakın tozun farklı hızlarda geçtiğine bakın.
-3. “Tüm evreni gör” ile keşfedilen yıldızlar arasında açılan çizgileri izleyin.
-4. Altıncı yıldızdan sonra genel görünümdeki takımyıldızı ve “Sana bir mektup”u açın.
-5. Sağ üstteki dalga düğmesiyle hareketi azaltın; telefonu yan çevirip deneyin.
 
 ## Tarihsel kayıt — iki yıldızlık pilot
 

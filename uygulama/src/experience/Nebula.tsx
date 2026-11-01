@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import {
-  AdditiveBlending,
+  AddEquation,
+  CustomBlending,
   InstancedBufferAttribute,
   InstancedBufferGeometry,
   Float32BufferAttribute,
@@ -10,6 +11,9 @@ import {
   PlaneGeometry,
   Scene,
   ShaderMaterial,
+  OneFactor,
+  OneMinusSrcAlphaFactor,
+  Vector2,
   WebGLRenderTarget,
 } from 'three';
 import { buildNebula } from './nebulaLayout';
@@ -34,6 +38,7 @@ varying vec3 vEdge;
 varying float vIntensity;
 varying float vSeed;
 varying float vScale;
+varying float vField;
 void main(){
   vec3 camRight=vec3(viewMatrix[0][0],viewMatrix[1][0],viewMatrix[2][0]);
   vec3 camUp=vec3(viewMatrix[0][1],viewMatrix[1][1],viewMatrix[2][1]);
@@ -51,6 +56,7 @@ void main(){
   vEdge=aEdge;
   vSeed=aParams.y;
   vScale=aSize;
+  vField=aParams.w;
   float dist=distance(cameraPosition,aCenter);
   // Kamera parçacığa girerken yumuşakça kaybolur: sis duvarı veya düzlem kenarı görünmez.
   float nearFade=smoothstep(aSize*.3,aSize*1.25,dist);
@@ -69,28 +75,45 @@ varying vec3 vEdge;
 varying float vIntensity;
 varying float vSeed;
 varying float vScale;
+varying float vField;
 ${textureNoise(octaves)}
 void main(){
   float r=length(vUv);
-  // Dış halka neredeyse hiç katkı vermez; gürültü hesaplanmadan atılır.
-  if(r>.86) discard;
-  float falloff=1.-smoothstep(.0,.9,r);
-  falloff*=falloff;
-  vec3 p=vWorld/(vScale*.85)+vec3(vSeed,vSeed*.37,-vSeed*.71);
-  p+=vec3(uTime*.012,-uTime*.008,uTime*.006);
-  float warp=tnoise(p*.55)*1.5;
-  vec3 q=p+vec3(warp*.9,warp*.4,-warp*.6);
+  if(r>.94) discard;
+  // Parçacık yalnızca gaz alanının görünür olduğu bölgeyi belirler (maske);
+  // desenin kendisi damar boyunca ortak, dünyaya bağlı bir hacimden gelir.
+  float mask=1.-smoothstep(.3,.94,r);
+  vec3 p=vWorld/vField+vec3(vSeed,vSeed*.37,-vSeed*.71);
+  p+=vec3(uTime*.010,-uTime*.007,uTime*.005);
+  // Büyük ölçekli kapsama: damarın içinde de geniş, düzensiz koyu boşluklar açılır.
+  // Ucuz tek örnek; boş bölgede pahalı ayrıntı hiç hesaplanmaz.
+  vec4 macro=tnoise4(p*.3+vec3(7.3,1.1,3.9));
+  float cover=smoothstep(-.12,.42,macro.r);
+  if(cover*mask<.015) discard;
+  // Alan bükümü: düz bulutlar yerine kıvrımlı, akışkan yapılar.
+  vec3 q=p+tnoise4(p*.6+vec3(1.7,9.2,3.1)).xyz*1.1;
   float n=tfbm(q)*.5+.5;
-  // Geniş gaz gövdesi + ince, parlak kıvrım damarları; aralarda koyu boşluk kalır.
-  float body=smoothstep(.47,.88,n+falloff*.12);
-  float ridge=1.-abs(tnoise(q*.95+vec3(3.7))*1.5);
-  float veins=pow(ridge,5.)*smoothstep(.36,.72,n);
-  float density=(body*.66+veins*.75)*falloff;
-  vec3 col=mix(vEdge,vCore,smoothstep(.45,.92,n));
-  col=mix(col,vCore*1.25,veins*.6);
-  // Yoğun bölgelerde sıcak, beyaza yakın çekirdek; geniş alanlar beyaza patlamaz.
-  col+=vec3(.9,.95,1.)*pow(density,4.)*.5;
-  gl_FragColor=vec4(col*density*vIntensity,1.);
+  // Büyük şeklin içindeki ışıyan çekirdek: geniş, yumuşak ama yalnız yoğun bölgelerde.
+  float broad=smoothstep(.05,.65,macro.g)*cover*cover;
+  // Düzensiz koyu boşluklar: alan zayıfsa bu kesit hiç katkı vermez.
+  if(n<.34&&broad<.04) discard;
+  // Geniş gaz gövdesi, içinde orta ölçekli kümeler.
+  float body=smoothstep(.5,.84,n);
+  // İnce, kıvrımlı ve keskin ışıklı filamentler: iki ölçekte sırt gürültüsü.
+  vec4 mid=tnoise4(q*1.7+vec3(3.7,-1.2,.4));
+  float ridgeA=1.-abs(mid.r);
+  float ridgeB=1.-abs(tnoise(q*3.4+vec3(-2.1,4.4,.3)));
+  float fil=(pow(ridgeA,10.)*.9+pow(ridgeB,16.)*.4)*smoothstep(.4,.68,n);
+  // Koyu toz şeritleri: ayrı bir sırt alanı gazı keser ve arkadaki gökyüzünü karartır.
+  float dustRidge=1.-abs(mid.g);
+  float dust=smoothstep(.86,.975,dustRidge)*smoothstep(.42,.64,n);
+  // Gövdenin yoğun bölgeleri daha parlak: büyük şeklin içinde ışıyan çekirdekler.
+  float emission=((body*.6+body*body*1.1+fil*1.3)*cover+broad*.75*smoothstep(.22,.6,n))*(1.-dust*.85)*mask*1.45;
+  vec3 col=mix(vEdge,vCore,smoothstep(.52,.86,n));
+  // Filamentler çekirdek renginin daha açık, ama beyaz olmayan tonu.
+  col=mix(col,vCore*1.2+vec3(.06),clamp(fil*.7,0.,1.));
+  col=mix(col,vCore,broad*.35);
+  gl_FragColor=vec4(col*emission*vIntensity,dust*mask*cover*vIntensity*2.6);
 }
 `;
 
@@ -104,9 +127,26 @@ void main(){
 
 const compositeFragment = /* glsl */ `
 uniform sampler2D uMap;
+uniform vec2 uTexel;
+uniform float uSharpen;
 varying vec2 vUv;
 void main(){
-  gl_FragColor=vec4(texture2D(uMap,vUv).rgb,1.);
+  vec4 c=texture2D(uMap,vUv);
+  // Düşük çözünürlüklü ara hedeften büyütmenin yumuşattığı ayrıntıyı geri kazanmak
+  // için hafif keskinleştirme (dört komşu örnek).
+  vec4 blur=(texture2D(uMap,vUv+vec2(uTexel.x,0.))+texture2D(uMap,vUv-vec2(uTexel.x,0.))
+    +texture2D(uMap,vUv+vec2(0.,uTexel.y))+texture2D(uMap,vUv-vec2(0.,uTexel.y)))*.25;
+  c=max(c+(c-blur)*uSharpen,0.);
+  float absorb=1.-exp(-c.a*1.4);
+  vec3 e=c.rgb*(1.-absorb*.5);
+  // Renk korumalı yumuşak sıkıştırma: yoğun bölgeler beyaza patlamaz ve bloom
+  // eşiğinin altında kalır; bulutsu ayrıntısı ışıma altında kaybolmaz.
+  float m=max(max(e.r,e.g),e.b);
+  float k=.9*(1.-exp(-m/.9));
+  e*=k/max(m,1e-4);
+  float l=dot(e,vec3(.2126,.7152,.0722));
+  e=max(mix(vec3(l),e,1.12),0.);
+  gl_FragColor=vec4(e,absorb);
 }
 `;
 
@@ -115,6 +155,8 @@ interface NebulaProps {
   octaves: number;
   /** Bulutsunun çizildiği ara hedefin ekran çözünürlüğüne oranı. */
   resolution: number;
+  /** Büyütmede kaybolan ayrıntıyı geri kazanan keskinleştirme miktarı. */
+  sharpen: number;
   bridge: SceneBridge;
 }
 
@@ -123,7 +165,7 @@ interface NebulaProps {
  * sahneye, anı yıldızlarından önce eklenir. Saydam katman maliyeti böylece
  * ekran çözünürlüğünden bağımsızlaşır.
  */
-export function Nebula({ share, octaves, resolution, bridge }: NebulaProps) {
+export function Nebula({ share, octaves, resolution, sharpen, bridge }: NebulaProps) {
   const gl = useThree((s) => s.gl);
   const size = useThree((s) => s.size);
   const dpr = useThree((s) => s.viewport.dpr);
@@ -147,7 +189,13 @@ export function Nebula({ share, octaves, resolution, bridge }: NebulaProps) {
       transparent: true,
       depthWrite: false,
       depthTest: false,
-      blending: AdditiveBlending,
+      // Renk ışık olarak, alfa toz yoğunluğu olarak toplanır.
+      blending: CustomBlending,
+      blendEquation: AddEquation,
+      blendSrc: OneFactor,
+      blendDst: OneFactor,
+      blendSrcAlpha: OneFactor,
+      blendDstAlpha: OneFactor,
     });
     const puffs = new Mesh(geo, mat);
     puffs.frustumCulled = false;
@@ -156,24 +204,29 @@ export function Nebula({ share, octaves, resolution, bridge }: NebulaProps) {
     const target = new WebGLRenderTarget(1, 1, { type: HalfFloatType, depthBuffer: false });
     const quad = new PlaneGeometry(2, 2);
     const composite = new ShaderMaterial({
-      uniforms: { uMap: { value: target.texture } },
+      uniforms: { uMap: { value: target.texture }, uTexel: { value: new Vector2(1, 1) }, uSharpen: { value: 0 } },
       vertexShader: compositeVertex,
       fragmentShader: compositeFragment,
-      // Opak listede çizilir ki anı yıldızlarından önce gelsin; karışım yine toplamsal.
+      // Opak listede çizilir ki anı yıldızlarından önce gelsin. Işık eklenir, toz
+      // arkadaki gökyüzünü karartır: sonuç = bulutsu + gökyüzü × (1 − toz).
       transparent: false,
       depthTest: false,
       depthWrite: false,
-      blending: AdditiveBlending,
+      blending: CustomBlending,
+      blendEquation: AddEquation,
+      blendSrc: OneFactor,
+      blendDst: OneMinusSrcAlphaFactor,
     });
     return { geo, mat, offscreen, target, quad, composite };
   }, [share, octaves]);
 
   useEffect(() => {
-    res.target.setSize(
-      Math.max(1, Math.round(size.width * dpr * resolution)),
-      Math.max(1, Math.round(size.height * dpr * resolution)),
-    );
-  }, [res, size.width, size.height, dpr, resolution]);
+    const w = Math.max(1, Math.round(size.width * dpr * resolution));
+    const h = Math.max(1, Math.round(size.height * dpr * resolution));
+    res.target.setSize(w, h);
+    res.composite.uniforms.uTexel.value.set(1 / w, 1 / h);
+    res.composite.uniforms.uSharpen.value = sharpen;
+  }, [res, size.width, size.height, dpr, resolution, sharpen]);
 
   useEffect(
     () => () => {
@@ -191,7 +244,7 @@ export function Nebula({ share, octaves, resolution, bridge }: NebulaProps) {
     const previous = gl.getRenderTarget();
     const autoClear = gl.autoClear;
     gl.setRenderTarget(res.target);
-    gl.setClearColor(0x000000, 1);
+    gl.setClearColor(0x000000, 0);
     gl.clear(true, false, false);
     gl.autoClear = false;
     gl.render(res.offscreen, camera);

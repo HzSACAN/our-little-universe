@@ -1,8 +1,9 @@
 // Altı yıldız + mektup: kilit, tekrar ziyaret, anıdan mektuba geçiş, Escape/odak,
 // klavye; WebGL kaybı ve yeniden deneme; WebGL yokken mektuba kadar okuma akışı.
 import { launch, BASE } from './cdp.mjs';
+import { runChecks } from './check.mjs';
 const b = await launch();
-const ok = (name, cond, extra = '') => console.log(cond ? 'GEÇTİ ' : 'KALDI ', name, extra);
+await runChecks(async ({ ok, consoleClean }) => {
 const press = async (key, code, kc, text) => {
   await b.send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode: kc, text });
   await b.send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode: kc });
@@ -30,8 +31,10 @@ ok('altıncı farklı keşifte 6/6', s.count?.startsWith('6 /'), s.count);
 ok('altıncıda mektup düğmesi açık', s.headerLetter === false);
 
 // Anıdan mektuba geçiş: tek dialog, Escape, odak.
-await b.eval(`document.querySelector('.arrival-panel .text-button').focus()`);
-await press('Enter', 'Enter', 13, '\r'); await b.wait(500);
+// Anı, yıldızın erişilebilir hedefinden açılır.
+await b.wait(400); // hedef ilk karede konumlanır
+await b.eval(`document.querySelector('.star-target').focus()`);
+await press('Enter', 'Enter', 13, '\r'); await b.wait(900);
 ok('anı dialogu açık', (await st()).memory);
 const toLetter = await b.eval(`(() => { const btn = [...document.querySelectorAll('dialog.memory-dialog[open] button')].find(x => /mektu/i.test(x.textContent)); if (!btn) return null; btn.focus(); return btn.textContent.trim(); })()`);
 ok('anı kartında mektup düğmesi', !!toLetter, toLetter ?? '');
@@ -92,5 +95,5 @@ s = await st();
 ok('yedekte Escape ve odak mektup düğmesine döndü', !s.letter && /mektup/i.test(s.focus), s.focus);
 await b.shot('m-yedek-tamam');
 await b.send('Page.removeScriptToEvaluateOnNewDocument', { identifier: script.identifier });
-console.log(b.logs.filter((l) => !/DevTools|THREE.Clock|vite/.test(l)).join('\n') || '(konsol temiz)');
-await b.close();
+consoleClean(b.logs);
+}, { close: () => b.close() });

@@ -1,8 +1,10 @@
-import { Data3DTexture, LinearFilter, RedFormat, RepeatWrapping, UnsignedByteType } from 'three';
+import { Data3DTexture, LinearFilter, RGBAFormat, RepeatWrapping, UnsignedByteType } from 'three';
 import { seededRandom } from './random';
 
 // Bulutsu shader'ı her parçada pahalı simplex gürültü hesaplamak yerine,
 // açılışta bir kez üretilen döşenebilir 3B gradyan gürültü dokusundan okur.
+// Dört kanal, aynı alanın hücre boyundan uzak kaydırılmış kopyalarıdır: yerel
+// olarak bağımsız dört gürültü tek doku okumasıyla gelir.
 
 const SIZE = 64;
 /** Dokunun bir turunda kaç gürültü hücresi var (shader ölçeği buna göre). */
@@ -65,15 +67,34 @@ function buildNoise(): Uint8Array {
   return out;
 }
 
+/** Kanalların doku içindeki kaydırması (texel); 8 texel = 1 gürültü hücresi. */
+const CHANNEL_SHIFTS: [number, number, number][] = [[0, 0, 0], [36, 12, 44], [20, 52, 28], [44, 28, 12]];
+
+function packChannels(single: Uint8Array): Uint8Array {
+  const out = new Uint8Array(SIZE * SIZE * SIZE * 4);
+  const wrap = (v: number) => v & (SIZE - 1);
+  for (let z = 0; z < SIZE; z++) {
+    for (let y = 0; y < SIZE; y++) {
+      for (let x = 0; x < SIZE; x++) {
+        const o = ((z * SIZE + y) * SIZE + x) * 4;
+        CHANNEL_SHIFTS.forEach(([dx, dy, dz], c) => {
+          out[o + c] = single[(wrap(z + dz) * SIZE + wrap(y + dy)) * SIZE + wrap(x + dx)];
+        });
+      }
+    }
+  }
+  return out;
+}
+
 export function noiseTexture(): Data3DTexture {
   if (!shared) {
-    const texture = new Data3DTexture(buildNoise(), SIZE, SIZE, SIZE);
-    texture.format = RedFormat;
+    const texture = new Data3DTexture(packChannels(buildNoise()), SIZE, SIZE, SIZE);
+    texture.format = RGBAFormat;
     texture.type = UnsignedByteType;
     texture.minFilter = LinearFilter;
     texture.magFilter = LinearFilter;
     texture.wrapS = texture.wrapT = texture.wrapR = RepeatWrapping;
-    texture.unpackAlignment = 1;
+    texture.unpackAlignment = 4;
     texture.needsUpdate = true;
     shared = texture;
   }
@@ -83,7 +104,9 @@ export function noiseTexture(): Data3DTexture {
 /** Doku tabanlı gürültü ve fbm (GLSL). `uNoise` sampler3D uniform'u gerekir. */
 export const textureNoise = (octaves: number) => /* glsl */ `
 uniform highp sampler3D uNoise;
-float tnoise(vec3 p){ return texture(uNoise,p*${(1 / NOISE_PERIOD).toFixed(4)}).r*2.-1.; }
+// Tek okumada dört bağımsız gürültü (-1…1).
+vec4 tnoise4(vec3 p){ return texture(uNoise,p*${(1 / NOISE_PERIOD).toFixed(4)})*2.-1.; }
+float tnoise(vec3 p){ return tnoise4(p).r; }
 float tfbm(vec3 p){
   float sum=0.;
   float amp=.5;

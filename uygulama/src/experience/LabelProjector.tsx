@@ -8,13 +8,15 @@ const projected = new Vector3();
 type Rect = [number, number, number, number];
 const overlaps = (a: Rect, b: Rect) => a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3];
 const activeProjected = new Vector3();
+const companionProjected = new Vector3();
+const hintSize = new WeakMap<HTMLElement, { w: number; h: number; at: number }>();
 // Etiket boyutları her frame ölçülmez (zorunlu yerleşim hesabını önler); arada bir yenilenir.
 const labelSize = new WeakMap<HTMLElement, { w: number; h: number; at: number }>();
 let frameCount = 0;
 let obstacles: Rect[] = [];
 // Başlık araçları ve alt gezinme de etiketlerin yerleşebileceği alanı kısıtlar.
 function measureObstacles() {
-  obstacles = [...document.querySelectorAll<HTMLElement>('.header > *, .nav-row, .journey-hud, .navigation .route-stops')]
+  obstacles = [...document.querySelectorAll<HTMLElement>('.header > *, .nav-row, .journey-hud, .navigation .route-stops, .arrival-panel, .completion-panel, .intro > *, .explore-caption')]
     .map((e) => e.getBoundingClientRect())
     .filter((r) => r.width > 0)
     .map((r) => [r.left - 6, r.top - 6, r.right + 6, r.bottom + 6] as Rect);
@@ -45,6 +47,7 @@ export function LabelProjector({ bridge }: { bridge: SceneBridge }) {
         d,
       };
     }
+    placeStarTarget(bridge, cam, focal, size.width, size.height);
     const placed: Rect[] = [];
     const rings: Rect[] = [];
     const pending: { el: HTMLElement; x: number; y: number; ring: number }[] = [];
@@ -105,4 +108,67 @@ export function LabelProjector({ bridge }: { bridge: SceneBridge }) {
     }
   });
   return null;
+}
+
+/**
+ * Bulunulan yıldızın erişilebilir dokunma hedefini yıldızın ekrandaki diskine
+ * oturtur (en az 44 px). İkili yıldızda eş yıldız için ikinci bir dokunma alanı
+ * konumlanır. İpucu, yüzeyi ve metni kapatmayacak bir yana yerleşir.
+ */
+function placeStarTarget(bridge: SceneBridge, cam: PerspectiveCamera, focal: number, width: number, height: number) {
+  const target = bridge.starTarget;
+  if (!target) return;
+  let visible = false;
+  let x = 0, y = 0, surface = 0;
+  if (bridge.current && !bridge.flying) {
+    const body = stars[bridge.current];
+    activeProjected.copy(body.position).project(cam);
+    const d = cam.position.distanceTo(body.position);
+    x = (activeProjected.x * 0.5 + 0.5) * width;
+    y = (-activeProjected.y * 0.5 + 0.5) * height;
+    surface = (body.radius * focal) / d;
+    visible = activeProjected.z < 1 && x > -surface && x < width + surface && y > -surface && y < height + surface;
+  }
+  if (target.dataset.visible !== String(visible)) target.dataset.visible = String(visible);
+  if (!visible) {
+    if (bridge.starHint) bridge.starHint.dataset.placed = 'false';
+    return;
+  }
+  target.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
+  target.style.setProperty('--r', `${Math.max(22, surface * 1.08).toFixed(1)}px`);
+  if (bridge.current === 'binary') {
+    const c = bridge.companion;
+    const cd = Math.max(1, cam.position.distanceTo(companionProjected.set(c.x, c.y, c.z)));
+    companionProjected.project(cam);
+    const cx = (companionProjected.x * 0.5 + 0.5) * width - x;
+    const cy = (-companionProjected.y * 0.5 + 0.5) * height - y;
+    target.style.setProperty('--cx', `${cx.toFixed(1)}px`);
+    target.style.setProperty('--cy', `${cy.toFixed(1)}px`);
+    target.style.setProperty('--cr', `${Math.max(22, ((c.r * focal) / cd) * 1.8).toFixed(1)}px`);
+  }
+
+  const hint = bridge.starHint;
+  if (!hint) return;
+  let measured = hintSize.get(hint);
+  if (!measured || frameCount - measured.at > 45) {
+    measured = { w: hint.offsetWidth || 220, h: hint.offsetHeight || 40, at: frameCount };
+    hintSize.set(hint, measured);
+  }
+  const { w, h } = measured;
+  // Korona iç halkasının dışında, yüzeye değmeden.
+  const gap = Math.max(26, surface * 0.55);
+  const R = surface + gap;
+  const options: [string, Rect][] = [
+    ['bottom', [x - w / 2, y + R, x + w / 2, y + R + h]],
+    ['top', [x - w / 2, y - R - h, x + w / 2, y - R]],
+    ['left', [x - R - w, y - h / 2, x - R, y + h / 2]],
+    ['right', [x + R, y - h / 2, x + R + w, y + h / 2]],
+  ];
+  const fits = (r: Rect) => r[0] >= 12 && r[2] <= width - 12 && r[1] >= 12 && r[3] <= height - 12 && !obstacles.some((o) => overlaps(o, r));
+  const found = options.find(([, r]) => fits(r));
+  hint.dataset.placed = String(!!found);
+  if (!found) return;
+  const [side, rect] = found;
+  hint.style.transform = `translate3d(${rect[0].toFixed(1)}px, ${rect[1].toFixed(1)}px, 0)`;
+  if (hint.dataset.side !== side) hint.dataset.side = side;
 }

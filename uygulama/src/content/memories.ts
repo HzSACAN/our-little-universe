@@ -61,15 +61,7 @@ export const memoryById = (id: StarId): Memory => {
 
 export const isComplete = (visited: readonly StarId[]) => starOrder.every((id) => visited.includes(id));
 
-/** Bağlantılar ziyaret sırasına değil, sabit hikâye sırasına bağlıdır. */
-export function discoveredEdges(visited: readonly StarId[]): [StarId, StarId][] {
-  const edges: [StarId, StarId][] = [];
-  for (let i = 0; i < starOrder.length - 1; i++) {
-    if (visited.includes(starOrder[i]) && visited.includes(starOrder[i + 1])) edges.push([starOrder[i], starOrder[i + 1]]);
-  }
-  if (isComplete(visited)) edges.push([starOrder[starOrder.length - 1], starOrder[0]]);
-  return edges;
-}
+// Takımyıldızın bağlantı grafiği hikâye sırasından ayrıdır: experience/constellationGraph.ts.
 
 export function nextUnvisited(current: StarId | null, visited: readonly StarId[]): StarId {
   const start = current ? starOrder.indexOf(current) : -1;

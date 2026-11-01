@@ -1,11 +1,11 @@
-import { useRef } from 'react';
 import { memories, type StarId } from '../content/memories';
 import type { SceneBridge } from '../experience/bridge';
 
 interface StarLabelsProps {
   bridge: SceneBridge;
   visited: StarId[];
-  onSelect: (id: StarId) => void;
+  /** Sürükleme/çoklu dokunma ayrımı App'teki dokunuş korumasında yapılır. */
+  onSelect: (id: StarId, fromKeyboard: boolean) => void;
 }
 
 /**
@@ -13,7 +13,6 @@ interface StarLabelsProps {
  * döngüsü tarafından projeksiyonla yazılır.
  */
 export function StarLabels({ bridge, visited, onSelect }: StarLabelsProps) {
-  const press = useRef<{ x: number; y: number } | null>(null);
   return (
     <div className="star-labels" role="group" aria-label="Uzaydaki anı yıldızları">
       {memories.map((m) => {
@@ -32,14 +31,7 @@ export function StarLabels({ bridge, visited, onSelect }: StarLabelsProps) {
               };
             }}
             aria-label={`${m.index}. yıldıza yolculuk: ${m.title}${seen ? ', keşfedildi' : ''}`}
-            onPointerDown={(e) => (press.current = { x: e.clientX, y: e.clientY })}
-            onClick={(e) => {
-              // Etiket üzerinde başlayan sürükleme bırakılınca uçuş başlamaz.
-              const p = press.current;
-              press.current = null;
-              if (p && e.detail > 0 && Math.hypot(e.clientX - p.x, e.clientY - p.y) > 10) return;
-              onSelect(m.id);
-            }}
+            onClick={(e) => onSelect(m.id, e.detail === 0)}
           >
             <span className="target-ring" aria-hidden="true" />
             <span className="world-name">

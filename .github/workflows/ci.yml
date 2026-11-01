@@ -1,0 +1,40 @@
+# Temel CI: kilitli bağımlılık kurulumu, tip kontrolü, birim testleri ve üretim derlemesi.
+# Gerçek GPU gerektiren tarayıcı kontrolleri (pnpm dogrula:*) burada ÇALIŞMAZ;
+# onlar WebGL2 destekli yerel makinede ayrıca çalıştırılır ve README'de raporlanır.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  temel:
+    name: Tip kontrolü · test · derleme
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: uygulama
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: uygulama/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - name: Doğrulama betiklerinin hata yolu sıfırdan farklı çıkar
+        run: |
+          if node scripts/check.mjs --hata-yolu; then
+            echo "Başarısız kontrol 0 ile çıktı" >&2
+            exit 1
+          fi

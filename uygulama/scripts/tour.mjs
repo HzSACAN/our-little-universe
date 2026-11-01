@@ -2,10 +2,12 @@
 // ekranlarını alır, mektup kilidini ve frame sürelerini kaydeder.
 // Kullanım: node scripts/tour.mjs <genişlik> <yükseklik> <d|m> <etiket> [sıra, ör. 3,1,6,2,5,4]
 import { launch, BASE } from './cdp.mjs';
+import { runChecks } from './check.mjs';
 const [w, h, mode, tag = 'tur', orderArg = '1,2,3,4,5,6'] = process.argv.slice(2);
 const order = orderArg.split(',').map(Number);
 const mobile = mode === 'm';
 const b = await launch();
+await runChecks(async ({ ok, none, consoleClean }) => {
 await b.viewport(Number(w), Number(h), mobile, mobile ? 3 : 1);
 await b.go(`${BASE}/?olcum`);
 await b.wait(5000);
@@ -36,6 +38,9 @@ const labels = await b.eval(`[...document.querySelectorAll('.world-label')].map(
 const vis = labels.filter(l => l.v === 'true');
 const overlaps = [];
 for (let i = 0; i < vis.length; i++) for (let j = i + 1; j < vis.length; j++) { const a = vis[i].r, c = vis[j].r; if (a[0] < c[2] && c[0] < a[2] && a[1] < c[3] && c[1] < a[3]) overlaps.push(vis[i].id + '/' + vis[j].id); }
-console.log('görünür etiketler', vis.map(l => l.id).join(','), '| çakışan:', overlaps.join(' ') || 'yok');
-console.log(b.logs.filter(l => !/DevTools|THREE.Clock|vite/.test(l)).join('\n') || '(konsol temiz)');
-await b.close();
+console.log('görünür etiketler', vis.map(l => l.id).join(','));
+none('genel görünümde etiket çakışması yok', overlaps);
+ok('genel görünümde altı etiket görünür', vis.length === 6, String(vis.length));
+ok('tamamlanınca tamamlanma paneli', new Set(order).size !== 6 || (await b.eval("!!document.querySelector('.completion-panel')")));
+consoleClean(b.logs);
+}, { close: () => b.close() });

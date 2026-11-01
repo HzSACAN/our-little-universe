@@ -68,11 +68,11 @@ interface ArrivalPanelProps {
   memory: Memory;
   complete: boolean;
   onLetter: () => void;
-  onOpen: () => void;
 }
 
+/** Anı, yıldızın kendisine dokunarak açılır (StarTarget); panel yalnız yıldızı tanıtır. */
 export const ArrivalPanel = forwardRef<HTMLHeadingElement, ArrivalPanelProps>(function ArrivalPanel(
-  { memory, onOpen, complete, onLetter },
+  { memory, complete, onLetter },
   titleRef,
 ) {
   return (
@@ -82,10 +82,13 @@ export const ArrivalPanel = forwardRef<HTMLHeadingElement, ArrivalPanelProps>(fu
         {memory.title}
       </h2>
       <p>{memory.summary}</p>
-      <div className="arrival-actions"><button className="text-button" type="button" onClick={onOpen}>
-        Anıyı aç <span aria-hidden="true">↗</span>
-      </button>
-      {complete && <button className="text-button" type="button" onClick={onLetter}>Mektubunu aç <span aria-hidden="true">✧</span></button>}</div>
+      {complete && (
+        <div className="arrival-actions">
+          <button className="text-button" type="button" onClick={onLetter}>
+            Mektubunu aç <span aria-hidden="true">✧</span>
+          </button>
+        </div>
+      )}
       <span className="sample-note">Örnek anı · Gerçek hikâyenizle değiştirilecek</span>
     </section>
   );
