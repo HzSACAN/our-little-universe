@@ -17,7 +17,8 @@
     "dogrula:tur": "node scripts/tour.mjs 1440 900 d masaustu 1,2,3,4,5,6 && node scripts/tour.mjs 360 740 m telefon360 3,1,6,2,5,4 && node scripts/tour.mjs 844 390 m yatay 6,5,4,3,2,1",
     "dogrula:mektup": "node scripts/letter.mjs",
     "dogrula:yildiz": "node scripts/star.mjs",
-    "dogrula:dialog": "node scripts/race.mjs"
+    "dogrula:dialog": "node scripts/race.mjs",
+    "dogrula:pilot": "node scripts/pilot.mjs sonra"
   },
   "dependencies": {
     "@react-three/fiber": "9.8.2",

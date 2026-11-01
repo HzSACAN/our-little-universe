@@ -66,9 +66,13 @@ export function CameraRig({ layout, at, flight, bridge, onArrive, running }: Cam
   // Kameranın durduğu yer: dinlenme görüş açısı buna göre seçilir.
   const restAt = useRef<Destination>(at);
 
+  // Dinlenme duruşunda kameradan baktığı noktaya uzaklık: bakınma kayması bununla ölçeklenir.
+  const baseReach = useRef(1000);
+
   const setBase = (pose: CameraPose) => {
     basePosition.current.copy(pose.position);
     quaternionFor(pose.position, pose.target, baseQuat.current);
+    baseReach.current = pose.position.distanceTo(pose.target);
   };
 
   // İlk kurulum: açılış kadrajı, hafif bir yerleşme hareketiyle.
@@ -244,6 +248,11 @@ export function CameraRig({ layout, at, flight, bridge, onArrive, running }: Cam
         0,
       );
       tmpQuat.setFromEuler(lookEuler);
+      // Bakınma yalnız dönüş olsaydı yakın ve uzak katmanlar aynı açıyla kayardı. Kamera,
+      // baktığı yöne doğru bakış mesafesinin küçük bir oranı kadar yana kayar: gerçek paralaks.
+      tmpVec.set(0, 0, -1).applyQuaternion(tmpQuat).add(tmpVec2.set(0, 0, 1));
+      tmpVec.z = 0;
+      camera.position.addScaledVector(tmpVec.applyQuaternion(baseQuat.current), baseReach.current * 0.08);
       camera.quaternion.copy(baseQuat.current).multiply(tmpQuat);
     }
 

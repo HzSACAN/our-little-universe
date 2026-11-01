@@ -17,6 +17,7 @@ import {
   WebGLRenderTarget,
 } from 'three';
 import { buildNebula } from './nebulaLayout';
+import { proceduralDim } from './texturedNebulaLayout';
 import { noiseTexture, textureNoise } from './noiseTexture';
 import type { SceneBridge } from './bridge';
 
@@ -71,6 +72,7 @@ void main(){
 
 const fragmentShader = (octaves: number) => /* glsl */ `
 uniform float uTime;
+uniform float uDim;
 varying vec2 vUv;
 varying vec3 vWorld;
 varying vec3 vCore;
@@ -94,7 +96,7 @@ void main(){
   // Kapsama yumuşak: boşluklar keskin yarık değil, gazın incelip koyulaştığı bölgeler.
   float cover=smoothstep(-.5,.55,macro.r);
   // Katkısı görünmeyecek kadar küçük kesitlerde pahalı gürültü hiç hesaplanmaz.
-  if(cover*mask*vIntensity<.012) discard;
+  if(cover*mask*vIntensity*uDim<.012) discard;
   // Hafif alan bükümü: kıvrım değil, akışkan ve bütünlüklü gövdeler.
   vec3 q=p+tnoise4(p*.45+vec3(1.7,9.2,3.1)).xyz*.65;
   float n=tfbm(q)*.5+.5;
@@ -118,7 +120,7 @@ void main(){
   vec3 col=mix(vEdge,vCore,smoothstep(.46,.84,n)*mix(.2,1.,accent));
   // Çekirdek ve ince kenarlar çekirdek renginin açık, beyaza yaklaşan tonu.
   col=mix(col,mix(vCore,vec3(.95,.97,1.),.4),clamp(knot*.55+fil*.6,0.,1.));
-  gl_FragColor=vec4(col*emission*vIntensity*1.85,dust*mask*cover*vIntensity*1.1);
+  gl_FragColor=vec4(col*emission*vIntensity*1.85,dust*mask*cover*vIntensity*1.1)*uDim;
 }
 `;
 
@@ -188,7 +190,7 @@ export function Nebula({ share, octaves, resolution, sharpen, bridge }: NebulaPr
     geo.setAttribute('aGlow', new InstancedBufferAttribute(data.glows, 1));
     geo.instanceCount = data.count;
     const mat = new ShaderMaterial({
-      uniforms: { uTime: { value: 0 }, uNoise: { value: noiseTexture() } },
+      uniforms: { uTime: { value: 0 }, uDim: { value: 1 }, uNoise: { value: noiseTexture() } },
       vertexShader,
       fragmentShader: fragmentShader(octaves),
       transparent: true,
@@ -246,6 +248,9 @@ export function Nebula({ share, octaves, resolution, sharpen, bridge }: NebulaPr
 
   useFrame(({ camera }, delta) => {
     if (!bridge.reducedMotion) res.mat.uniforms.uTime.value += Math.min(delta, 0.05);
+    // Açılış ve ilk yıldız rotasında ayrıntılı dokular öne çıkar, prosedürel sis geri çekilir;
+    // kamera derine ilerledikçe uçuş boyunca yumuşakça tam güce döner (texturedNebulaLayout.ts).
+    res.mat.uniforms.uDim.value = proceduralDim(camera.position.z);
     const previous = gl.getRenderTarget();
     const autoClear = gl.autoClear;
     gl.setRenderTarget(res.target);

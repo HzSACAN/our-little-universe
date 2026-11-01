@@ -1,6 +1,7 @@
 import { CatmullRomCurve3, Color, Vector3 } from 'three';
 import { gaussian, range, seededRandom } from './random';
 import { stars } from './world';
+import { texturedCover } from './texturedNebulaLayout';
 
 // Bulutsular dünya uzayındaki kıvrımlı damarlar boyunca dizilmiş yumuşak
 // hacim parçacıklarından oluşur. Ana atmosfer mavi/lacivert; diğer renkler bölgesel vurgudur.
@@ -182,6 +183,8 @@ export function buildNebula(share: number): NebulaPuffs {
         if (d < size * 0.7 + body.clearance) size = Math.max(30, (d - body.clearance) / 0.7);
       }
       const coreMix = core.clone().lerp(edge, rng() * 0.35);
+      // Açılış pilotunun ayrıntılı dokularının önünde/içinde parlak sis aynı güçte binmez.
+      const dim = 1 - 0.8 * texturedCover(c);
       list.push({
         c,
         size,
@@ -189,7 +192,7 @@ export function buildNebula(share: number): NebulaPuffs {
         edge,
         tangent,
         glow: filament.glow ?? 0.3,
-        p: [filament.intensity * range(rng, 0.8, 1.15), seed, range(rng, filament.stretch[0], filament.stretch[1]), filament.scale],
+        p: [filament.intensity * range(rng, 0.8, 1.15) * dim, seed, range(rng, filament.stretch[0], filament.stretch[1]), filament.scale],
       });
     }
   });

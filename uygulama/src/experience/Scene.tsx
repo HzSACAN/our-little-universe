@@ -10,6 +10,7 @@ import { createFrameClock, createQualityWindow, frameSeconds, restartFrameClock,
 import { forcedTier, qualitySettings, type QualityTier } from './quality';
 import { Sky } from './Sky';
 import { Nebula } from './Nebula';
+import { TexturedNebula } from './TexturedNebula';
 import { Starfield } from './Starfield';
 import { Constellation } from './Constellation';
 import { MemoryStars } from './MemoryStars';
@@ -33,7 +34,7 @@ interface SceneProps {
   onSlow: () => void;
 }
 
-// Ölçüm sırasında katmanları tek tek kapatmak için: ?olcum&kapat=nebula,bloom
+// Ölçüm sırasında katmanları tek tek kapatmak için: ?olcum&kapat=nebula,doku,post
 const disabled = new Set(
   new URLSearchParams(window.location.search).has('olcum')
     ? (new URLSearchParams(window.location.search).get('kapat') ?? '').split(',')
@@ -62,6 +63,7 @@ export function Scene(props: SceneProps) {
       {!disabled.has('nebula') && (
         <Nebula share={q.nebulaShare} octaves={q.nebulaOctaves} resolution={q.nebulaResolution} sharpen={q.nebulaSharpen} bridge={bridge} />
       )}
+      {!disabled.has('doku') && <TexturedNebula tier={tier} bridge={bridge} />}
       {!disabled.has('memory') && <MemoryStars bridge={bridge} interactive={interactive} onSelect={onSelect} />}
       <Constellation visited={visited} bridge={bridge} />
       {!disabled.has('memory') && <Beacons />}

@@ -44,9 +44,9 @@ void main(){
   // İnce ölçek: renkli bölgeler düz bir pus olarak değil, kümeler hâlinde okunur.
   float fine=fbm(d*13.+vec3(1.3))*.5+.5;
   float grain=mix(.65,1.,smoothstep(.3,.78,fine));
-  // Geniş lacivert/mavi atmosfer; mor ve fuşya yalnız bant içinde, bölgesel.
-  vec3 col=mix(voidCol,navy,smoothstep(.25,.85,n)*.9);
-  col=mix(col,blue,smoothstep(.5,.95,n)*(.12+band*.5)*grain);
+  // Koyu lacivert boşluk, içinde sönük mavi atmosfer; mor ve fuşya yalnız bant içinde, bölgesel.
+  vec3 col=mix(voidCol,navy,smoothstep(.3,.9,n)*.5);
+  col=mix(col,blue,smoothstep(.55,.95,n)*(.03+band*.2)*grain);
   col+=purple*smoothstep(.58,.92,m)*band*.32*grain;
   col+=fuchsia*smoothstep(.72,.95,m*n+band*.2)*.16*band*grain;
   col+=teal*smoothstep(.62,.92,n)*smoothstep(.4,.8,1.-m)*.14*grain;

@@ -30,6 +30,7 @@ Yerelde Chrome ve **gerçek WebGL2 GPU’su** gerekir (`CHROME` ve `BASE` ortam 
 ```bash
 pnpm dogrula:yildiz     # yıldıza dokunma: fare/dokunma, sürükleme, çoklu dokunma, touchcancel, eş yıldız, odak
 pnpm dogrula:dialog     # çakışan dialog istekleri: dokunuş + liste/yolculuk/ana sayfa/Escape, tek dialog kuralı
+pnpm dogrula:pilot      # dokulu açılış pilotu: açılış, bakınma, ilk yıldıza uçuş, eve dönüş; doku yükleme, kaynak sayıları
 pnpm dogrula:ekranlar   # 360/430/844 ve masaüstü: taşma, 44 px, ipucu ve etiket çakışması, anı geçişi
 pnpm dogrula:tur        # altı yıldız turu farklı sıralarla, Y genel görünümü, etiket çakışması
 pnpm dogrula:mektup     # mektup kilidi, anıdan mektuba, Escape/odak, bağlam kaybı, WebGL yedeği
@@ -59,15 +60,163 @@ React 19.3 · TypeScript 7 · Vite 8 · three 0.186 · @react-three/fiber 9.8 ·
 | `src/experience/MemoryStars.tsx` | Altı yıldızın yüzeyi ve koronası; davet halkası, hover/odak tepkisi, anı açılırken korona genişlemesi ve yayılan ışık dalgası; eş yıldızın dünya konumu. |
 | `src/experience/LabelProjector.tsx` | Etiketleri, bulunulan yıldızın erişilebilir dokunma hedefini (eş yıldız dahil) ve ipucunu gerçek projeksiyonla konumlar; metin, başlık ve gezinmeden kaçınır. |
 | `src/experience/Nebula.tsx`, `nebulaLayout.ts`, `noiseTexture.ts` | Y çevresindeki damarlar boyunca hacim parçacıkları; damar başına ortak dünya gaz alanı; geniş gövde → orta doku → yalnız parlak kenar ve yoğunlaşmalarda ince ayrıntı; yumuşak toz; bölgesel renk vurguları; renk korumalı ton sıkıştırma; 4 kanallı 3B gürültü dokusu. |
-| `src/experience/Sky.tsx`, `Starfield.tsx`, `Beacons.tsx` | Küp dokuya pişirilen lacivert/mavi atmosfer; keskin küçük yıldızlar ve seçilmiş az sayıda dört kollu parıltı; yakın toz; uzak anı yıldızlarının parıltısı. |
+| `src/experience/TexturedNebula.tsx`, `texturedNebulaLayout.ts` | Açılış pilotu: dünya uzayında sabit, ayrıntılı bulutsu dokuları (paylaşılan doku önbelleği, premultiplied alfa, yakınlık/açı sönümü, kalite önceliği); prosedürel bulutsunun yerel ve kameraya bağlı kısılması. |
+| `public/assets/nebula/` | Paketten gelen iki saydam bulutsu dokusu (orijinal). |
+| `src/experience/Sky.tsx`, `Starfield.tsx`, `Beacons.tsx` | Küp dokuya pişirilen koyu lacivert atmosfer; keskin küçük yıldızlar ve seçilmiş az sayıda dört kollu parıltı; yakın toz; uzak anı yıldızlarının parıltısı. |
 | `src/experience/Constellation.tsx` | Y kenarlarını iki ucu keşfedilince, korona kenarından başlayarak açar. |
 | `src/experience/Scene.tsx`, `quality.ts`, `timing.ts` | Tek Canvas, bloom + ACES + vinyet, bağlam kaybı, kalite yöneticisi, ölçüm kancası. |
 | `src/App.tsx`, `src/ui/*`, `src/styles.css` | HTML arayüz; `ui/StarTarget.tsx` yıldızın erişilebilir hedefi ve ipucu; `ui/Dialogs.tsx` yıldızdan doğan/oraya dönen anı geçişi. |
 | `scripts/*.mjs` | Headless Chrome ile gerçek GPU’da otomatik kontroller, ölçüm, ekran görüntüsü ve video. |
+| `docs/ekranlar-dokulu-pilot/` | Dokulu açılış pilotu: referans, önce (fa81b1c) ve sonra; açılış, bakınma, ilk uçuş, eve dönüş. |
 | `docs/ekranlar-bulutsu-revizyon/` | 2 Kasım bulutsu revizyonu: Google referansı, 5d412ab, c9449cb ve revizyon aynı kadrajlarda. |
 | `docs/ekranlar-y-surumu/` | Y sürümünün (c9449cb) önce/sonra karşılaştırmaları, kabul kareleri ve videoları. Eski klasörler önceki sürümlere aittir. |
 
-## Bu turda yapılanlar (Claude, 2 Kasım 2026)
+## Dokulu bulutsu açılış pilotu (Claude, 2 Kasım 2026, ikinci tur)
+
+**Hazret’in kararı:** prosedürel bulutsunun geniş, puslu renk kütleleri beğenilmedi. Hedef, `referanslar/nebula-approved-look.png` görselindeki yön:
+- ayrıntılı ve derinlikli bir uzay;
+- koyu lacivert boşluklar ve ince dallanan gaz kenarları;
+- mor/pembe ve turkuaz/şampanya bölgeleri;
+- başlığın tarafında sakin bir alan.
+
+Görev tanımı `our-little-universe-nebula-pilot/CLAUDE-TASK.md` dosyasında. Kapsam:
+- açılış ve genel görünüm;
+- sürükleyerek bakınma;
+- ilk yıldıza uçuş ve eve dönüş.
+
+**Görsel hedefe henüz tam ulaşılmadı** (aşağıda “Kalan görsel sınırlamalar”). Görsel kabul Hazret’e aittir.
+
+### Varlıklar
+
+| Paket dosyası | Konum | Not |
+|---|---|---|
+| `reference/approved-look.png` | `referanslar/nebula-approved-look.png` | Tasarım hedefi. Sahnede **kullanılmaz**: arka plan, kameraya sabit düzlem ya da küre dokusu değildir. |
+| `textures/nebula-cyan-gold.png` | `public/assets/nebula/nebula-cyan-gold.png` | 1672×941 RGBA, düz alfa. Orijinal korunur; türev dosya üretilmedi. |
+| `textures/nebula-rose-violet.png` | `public/assets/nebula/nebula-rose-violet.png` | Aynı. |
+
+SHA-256 değerleri paket `manifest.json` ile aynı.
+
+Sahne öncesi inceleme:
+- **Saydam pikseller:** RGB değerleri doygun mavi, macenta ve kırmızı; düz alfayla süzülünce kenarda **renk saçağı ve hale** üretirdi.
+- **Dış gövdeler:** düz, açık mavi/lavanta dolgu; opak çizilince **çıkartma** gibi okunurdu.
+
+İkisi yükleme ve shader’da çözüldü (aşağıda).
+
+### Yapı
+
+- **`src/experience/texturedNebulaLayout.ts`:** altı katmanın verisi. Alanlar:
+  - doku kimliği;
+  - genel görünüm göz noktasından yön (`u`, `v`) ve uzaklık; Y takımyıldızıyla aynı sistem, gerçek projeksiyona göre;
+  - en-boy oranını koruyan genişlik;
+  - bakış ekseni etrafında dönüş, aynalama ve küçük eğim;
+  - opaklık ve pozlama;
+  - düzlem uzaklığına göre sönümleme aralığı;
+  - kalite önceliği.
+
+  Katmanlar ve derinlikleri:
+
+  | Katman | Doku | Uzaklık | Konum ve rol |
+  |---|---|---:|---|
+  | ana çekirdek | turkuaz-şampanya | 5200 | Y’nin arkasında |
+  | üst mor yay | pembe-mor | 6400 | sağ üst |
+  | alt turkuaz | turkuaz-şampanya | 3000 | sağ alt |
+  | derin mor | pembe-mor | 7600 | Y’nin çevresinde sönük alan |
+  | ön toz | pembe-mor | 1800 | sağ altta koyu, tozlu kütle |
+  | yakın tül | pembe-mor | 950 | ilk uçuşta en güçlü paralaks |
+
+  İki doku farklı ölçek, dönüş ve aynalamayla kullanılır; aynı damga yan yana gelmez. Yıldızların dünya konumları değişmedi.
+- **`src/experience/TexturedNebula.tsx`**, dünya uzayında sabit, `DoubleSide` saydam yüzeyler:
+  - **Doku yükleme:** her görsel bir kez indirilir ve katmanlar arasında paylaşılır (sayaçlı önbellek). Son katman ayrılınca 2 sn sonra dispose edilir; StrictMode’da ya da kademe değişiminde yeniden indirilmez. Adres `import.meta.env.BASE_URL` ile kurulur. Yükleme hatasında katman çizilmez, uyarı yazılır; sahne prosedürel bulutsuyla sürer.
+  - **Renk ve alfa:** doku yüklenirken alfa ile çarpılır (`premultiplyAlpha`); süzme ve mipmap saydam piksellerin rengini kenara taşımaz. Renk shader’da alfaya bölünüp sRGB’den doğrusala çevrilir (`NoColorSpace`; sRGB dönüşümü tek kez). Çıktı premultiplied, `NormalBlending`, `depthWrite=false`, `depthTest=true`.
+  - **Pastel dolgunun azaltılması:** ayrıntısız dolgu daha saydam. Ölçü, dokunun kaba mip düzeyine farkı; ince kenarlar ve ışıklı yapılar tam kalır.
+  - **Ton eşleme dengesi:** ACES ton eşlemesinin artırdığı doygunluk %14 azaltılır.
+  - **Sönümler:**
+    - UV kenarında yumuşak alfa: dikdörtgen sınır görünmez;
+    - kamera yüzeye yaklaştıkça **düzlem uzaklığına** göre sönüm (yalnız merkeze uzaklığa göre değil);
+    - yüzey yandan görüldükçe sönüm: kart kenarı görünmez.
+
+    Tamamen sönmüş ya da kameraya çok yakın katman hiç çizilmez.
+  - **Çizim sırası:** uzaklığa göre sabit (`renderOrder`). Her frame yeniden sıralama olmadığı için örtüşen katmanlarda sıçrama yok.
+  - **Diğer katmanlarla ilişki:**
+    - prosedürel bulutsudan sonra çizilir;
+    - yıldız alanı, anı yıldızı koronaları ve takımyıldız çizgilerinden önce;
+    - anı yıldızı yüzeyleri derinlik yazar, bu yüzden arkadaki doku onları örtmez.
+
+  Doğrudan ana sahnede, tam çözünürlükte çizilir; prosedürel bulutsunun düşük çözünürlüklü ara hedefinde yeniden bulanıklaşmaz.
+- **Prosedürel bulutsuyla birleştirme:**
+  - **Yerel dışlama:** ana dokulu katmanların önünde ve içinde kalan parçacıklar, genel görünüm göz noktasından bakıldığında %80’e kadar kısılır (`texturedCover`, `nebulaLayout.ts`).
+  - **Kameraya bağlı güç:** açılışta ve ilk yıldız rotasında sisin tamamı %40 güçte kalır. Kamera derine ilerledikçe, ikili yıldıza doğru (z −350 → −1100), yumuşakça tam güce döner (`proceduralDim`). Diğer rotalarda sis ani kaybolmaz ve stil ani değişmez.
+- **Gökyüzü:** uzak çevre olarak korundu, boşluklar daha koyu laciverte çekildi.
+- **Sürükleyerek bakınmada gerçek paralaks** (`CameraRig.tsx`). Önceden bakınma saf dönüştü; yakın ve uzak her şey aynı açıyla kayıyordu. Artık kamera baktığı yöne doğru bakış mesafesinin %8’i kadar yana kayar: açılışta en çok ~26 birim, varışta 2–3 birim. Kameranın tek sahibi yine CameraRig.
+- **Kalite kademeleri:**
+
+  | Kademe | Çizilen katmanlar | Anizotropi |
+  |---|---|---|
+  | Yüksek | altı katmanın tamamı | 4 |
+  | Orta | ön toz ve yakın tül kapanır; 4 katman | 4 |
+  | Düşük | yalnız ana çekirdek ve üst mor | 2 |
+
+  Ana kompozisyon her kademede kalır.
+- **Son işleme:** bloom eşiği değişmedi. Dokular eşiğin altında kalır, ışımayı yalnız yıldızlar yapar.
+- **Bu tam hacimsel bir bulutsu değildir.** Farklı derinliklerde, ayrı ayrı yerleştirilmiş saydam yüzeylerdir.
+
+### Doğrulama
+
+Ortam: Windows 11, AMD Renoir entegre GPU, ANGLE/D3D11, Chrome headless gerçek GPU yolu, üretim derlemesi. Telefon kareleri **390×844 emülasyonudur, gerçek cihaz testi değildir**.
+
+- **Temel:** `pnpm typecheck` ✔ · `pnpm test` ✔ 146/146 · `pnpm build` ✔.
+- **`pnpm dogrula:pilot`** (`scripts/pilot.mjs`, yeni) **18/18**. 1920×1080 (yüksek) ve 390×844 (orta) için:
+  - WebGL2 çalışıyor; açılışta altı etiket görünür;
+  - sürükleme bakışı değiştiriyor ve dialog açmıyor;
+  - ilk yıldıza varış ve eve dönüş çalışıyor;
+  - dönüşte doku/geometri artışı yok;
+  - her doku tek kez indiriliyor; ağ ve konsol hatası yok.
+- **Mevcut kontroller:**
+  - `dogrula:yolculuk` ✔, `dogrula:tur` üç sırayla ✔
+  - `dogrula:ekranlar` 156/156, `dogrula:yildiz` 34/34, `dogrula:dialog` 17/17
+  - `dogrula:mektup` 26/26, klavye 10/10
+  - `dogrula:etkilesim` 23/23: bir çalıştırmada zamanlamaya duyarlı “gizliyken uçuş ≤ %2” kontrolü %3 ilerlemeyle **kaldı**; ardından üç tekrarda geçti. Eşik değiştirilmedi.
+- **Diğer rotalar:** tur kareleri incelendi. Altı yıldızın varışında kart kenarı, sert kesilme ya da çizim sırası sıçraması görülmedi; prosedürel sis derin rotalarda tam güçte.
+
+**Performans.** `scripts/pilot.mjs` ile ölçüldü. Önceki sürüm (fa81b1c) ve pilot, aynı oturumda ve aynı viewport/kademe koşulunda sırayla iki tur çalıştırıldı. GPU bu oturumda yavaştı, sayılar önceki tablolarla karşılaştırılmamalı.
+
+| Görünüm | Kademe | fa81b1c p50 | pilot p50 | Çizim çağrısı | Doku / geometri / program |
+|---|---|---:|---:|---|---|
+| 1920×1080 | yüksek / 1 | 32,2–37,8 ms | 30,1–32,8 ms | 40 → 46 | 20→22 / 12→13 / 13→14 |
+| 390×844 emülasyon | orta / 1,35 | 13,3–13,4 ms | 13,3–13,4 ms | 36 → 40 | 16→18 / 12→13 / 13→14 |
+
+Önceki sürümün bir turunda açılış ölçümü 73 ms’ye sıçradı; aralığa katılmadı. Pilot bu cihazda ölçülebilir bir yavaşlama getirmedi: dokuların maliyetini, prosedürel sisin açılışta kısılmasıyla erken atılan parçalar karşılıyor. Gerçek telefon ölçümü yapılmadı.
+
+### Görsel kabul malzemesi
+
+`docs/ekranlar-dokulu-pilot/`. “Önce” kareleri fa81b1c’den, “sonra” kareleri pilottan; aynı betik, viewport, kamera ve kademe.
+- `referans-once-sonra-acilis.jpg`: referans görsel · önce · sonra (1920×1080 açılış).
+- `once-sonra-masaustu-<1..7>.jpg` ve `once-sonra-telefon-<1..7>.jpg`: solda önce, sağda sonra. Adımlar:
+  1. açılış
+  2. sola bakış
+  3. sağa bakış
+  4. altına uçuşun ortası
+  5. altın varış
+  6. eve dönüşün ortası
+  7. genel görünüm
+- `sonra-masaustu-acilis-tam.jpg`, `sonra-telefon-acilis-tam.jpg`: tam boy açılış.
+
+### Kalan görsel sınırlamalar
+
+- **Boşluk rengi:** referanstaki siyaha yakın lacivert yerine hâlâ belirgin çivit/mavi. Kaynak: gökyüzü bandı, %40’ta kalan uzak prosedürel hacimler ve ACES’in koyu tonları kaldırması.
+- **Gaz kütlesi:** referansta sağ yarıyı dolduran yoğun, koyu tozlu hacimler var; burada daha çok ince, parlak şeritler. İki doku, referanstaki katmanlı toz kütlelerini tek başına vermiyor.
+- **Doku ölçeği:** ayrıntı 1672 px genişlikten geliyor. Telefonda (DPR 3) ve varışta yakın planda doku büyütülüyor; kenarlarda dokunun kendi hafif “çatlak” deseni seçiliyor.
+- **Tekrar hissi:** aynı ana çekirdek katmanı ikili, pembe ve turkuaz yıldızların varışında benzer açıdan arka planda görünüyor.
+- **Varış ipucu okunurluğu:** ipucu birçok yıldızda parlak gazın üzerine düşüyor; okunur ama zayıflıyor.
+
+### Gerekli ek görsel varlıklar (henüz yok, kullanılmadı)
+
+- **Koyu toz kütleleri:** ışıklı kenarlı, saydam, en az iki adet. Referanstaki ön plan ve alt sağ hacimler için.
+- **Daha yüksek çözünürlüklü sürüm:** ana turkuaz-şampanya kütle için ≥ 3000 px genişlikte.
+- **Uzak tül katmanları:** daha geniş ve düşük kontrastlı 1–2 adet. Prosedürel uzak sisin yerini almaları için.
+- **Gece gökyüzü panoraması:** isteğe bağlı, 360°, koyu lacivert, gömülü yıldızsız. Bütün rotalar için sonraki kapsam.
+
+## Bu turda yapılanlar (Claude, 2 Kasım 2026, ilk tur)
 
 ### A. Bulutsu görsel revizyonu — Hazret’in görsel kabulünü bekliyor
 
@@ -293,7 +442,7 @@ Gerçek anılar, fotoğraflar ve mektup gelmedi; bu bölüm tamamlanmış sayıl
 
 ### Görsel kabul bekleyenler
 
-**2 Kasım bulutsu revizyonu** (`docs/ekranlar-bulutsu-revizyon/`): açılış/genel görünüm yönü onaylanana kadar tamamlanmış sayılmaz. Ayrıca: toz miktarı, parıltılı yıldız sayısı, ipucunun konumu ve dili, anı geçişinin süresi, Y’nin biçimi (özellikle kol açıları ve telefondaki boyutu). Bilinen: R3F kaynaklı `THREE.Clock` kullanım dışı uyarısı sürüyor.
+**Dokulu açılış pilotu** (`docs/ekranlar-dokulu-pilot/`): onaylanana kadar tamamlanmış sayılmaz; kalan sınırlamalar pilot bölümünde. Prosedürel 2 Kasım revizyonu (`docs/ekranlar-bulutsu-revizyon/`) beğenilmedi; pilot onun yerine açılışı taşıyor. Ayrıca: toz miktarı, parıltılı yıldız sayısı, ipucunun konumu ve dili, anı geçişinin süresi, Y’nin biçimi (özellikle kol açıları ve telefondaki boyutu). Bilinen: R3F kaynaklı `THREE.Clock` kullanım dışı uyarısı sürüyor.
 
 ---
 
