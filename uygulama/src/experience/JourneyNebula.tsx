@@ -63,7 +63,9 @@ void main(){
     if(shape<.001) continue;
     // A genuine 3D field sampled along the ray, including samples immediately
     // around the camera. Entering a cloud does not make it disappear.
-    vec3 q=p/620.+vec3(uTime*.001,-uTime*.0006,0.);
+    // Drift is a small bounded sway around the authored field. A linear drift
+    // slid new gas in front of every arrival framing after a few minutes.
+    vec3 q=p/620.+vec3(sin(uTime*.07),sin(uTime*.05),0.)*.006;
     vec4 macro=texture(uNoise,q);
     float detail=texture(uNoise,q*2.71+vec3(.21,.47,.13)).r;
     float gas=smoothstep(.44,.67,macro.r)*smoothstep(.3,.67,detail);
