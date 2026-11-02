@@ -22,6 +22,7 @@ uniform mat4 uInverseProjection;
 uniform mat4 uCameraWorld;
 uniform vec3 uEye;
 uniform float uTime;
+uniform float uPresence;
 uniform vec4 uClouds[${journeyClouds.length}];
 uniform vec3 uRadii[${journeyClouds.length}];
 uniform vec4 uStars[7];
@@ -69,7 +70,7 @@ void main(){
     vec4 macro=texture(uNoise,q);
     float detail=texture(uNoise,q*2.71+vec3(.21,.47,.13)).r;
     float gas=smoothstep(.44,.67,macro.r)*smoothstep(.3,.67,detail);
-    float density=shape*gas;
+    float density=shape*gas*uPresence;
     // Clear the immediate star bodies: arrival surfaces remain legible.
     for(int j=0;j<7;j++) {
       if(uStars[j].w<=0.) continue;
@@ -111,14 +112,19 @@ export function JourneyNebula({ tier, bridge }: { tier: QualityTier; bridge: Sce
     const volume = new ShaderMaterial({
       vertexShader: vertex, fragmentShader: volumeFragment(steps), depthTest: false, depthWrite: false,
       uniforms: {
-        uNoise: { value: noiseTexture() }, uTime: { value: 0 },
+        uNoise: { value: noiseTexture() }, uTime: { value: 0 }, uPresence: { value: 0 },
         uInverseProjection: { value: new Matrix4() }, uCameraWorld: { value: new Matrix4() },
         uEye: { value: new Vector3() }, uClouds: { value: cloudCenters }, uRadii: { value: cloudRadii },
         uStars: { value: [...Object.values(stars).map((s) => new Vector4(s.position.x, s.position.y, s.position.z, s.radius)), new Vector4(0, 0, 0, 0)] },
       },
     });
     const offscreen = new Scene();
-    offscreen.add(new Mesh(geometry, volume));
+    // The quad is placed in clip space by its shader; its world bounds sit at the
+    // origin. Culling it against the real camera skipped the pass once the origin
+    // left the view, and the last gas image stayed frozen over the screen.
+    const quad = new Mesh(geometry, volume);
+    quad.frustumCulled = false;
+    offscreen.add(quad);
     const material = new ShaderMaterial({
       vertexShader: vertex, fragmentShader: composite,
       uniforms: { uVolume: { value: target.texture } },
@@ -133,20 +139,32 @@ export function JourneyNebula({ tier, bridge }: { tier: QualityTier; bridge: Sce
   useEffect(() => () => {
     resources.geometry.dispose(); resources.target.dispose(); resources.volume.dispose(); resources.material.dispose();
   }, [resources]);
+  const overlay = useRef<Mesh>(null);
   useFrame(({ camera }, delta) => {
     const u = resources.volume.uniforms;
+    if (!bridge.reducedMotion) time.current += Math.min(delta, .05);
+    // Gas belongs to the journey: it thickens with flight intensity and is gone at
+    // rest. The low-resolution layer sits over everything, so at an arrival it read
+    // as smudges on the lens over the sharp nebula detail.
+    const presence = bridge.travel;
+    if (overlay.current) overlay.current.visible = presence > .002;
+    if (presence <= .002) return;
+    u.uPresence.value = presence;
     u.uInverseProjection.value.copy(camera.projectionMatrixInverse);
     u.uCameraWorld.value.copy(camera.matrixWorld);
     u.uEye.value.copy(camera.position);
     const companion = bridge.companion;
     u.uStars.value[6].set(companion.x, companion.y, companion.z, companion.r);
-    if (!bridge.reducedMotion) time.current += Math.min(delta, .05);
     u.uTime.value = time.current;
+    // The composer turns autoClear off; clear explicitly so no stale frame can survive.
     const previous = gl.getRenderTarget();
     gl.setRenderTarget(resources.target);
+    gl.setClearColor(0x000000, 0);
+    gl.clear(true, false, false);
     gl.render(resources.offscreen, camera);
     gl.setRenderTarget(previous);
+    gl.setClearColor(0x040616, 1);
   });
   // Absorption overlays distant stars as well as the sky, making entry visible.
-  return <mesh geometry={resources.geometry} material={resources.material} frustumCulled={false} renderOrder={1000} />;
+  return <mesh ref={overlay} visible={false} geometry={resources.geometry} material={resources.material} frustumCulled={false} renderOrder={1000} />;
 }
