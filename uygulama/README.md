@@ -65,15 +65,15 @@ React 19.3 · TypeScript 7 · Vite 8 · three 0.186 · @react-three/fiber 9.8 ·
 | `src/experience/LabelProjector.tsx` | Etiketleri, bulunulan yıldızın erişilebilir dokunma hedefini (eş yıldız dahil) ve ipucunu gerçek projeksiyonla konumlar; metin, başlık ve gezinmeden kaçınır. |
 | `src/experience/Nebula.tsx`, `nebulaLayout.ts`, `noiseTexture.ts` | Y çevresindeki damarlar boyunca hacim parçacıkları; damar başına ortak dünya gaz alanı; geniş gövde → orta doku → yalnız parlak kenar ve yoğunlaşmalarda ince ayrıntı; yumuşak toz; bölgesel renk vurguları; renk korumalı ton sıkıştırma; 4 kanallı 3B gürültü dokusu. |
 | `src/experience/TexturedNebula.tsx`, `texturedNebulaLayout.ts` | Açılış pilotu: dünya uzayında sabit, ayrıntılı bulutsu dokuları (paylaşılan doku önbelleği, premultiplied alfa, yakınlık/açı sönümü, kalite önceliği); prosedürel bulutsunun yerel ve kameraya bağlı kısılması. |
-| `public/assets/nebula/` | Paketten gelen iki saydam bulutsu dokusu (orijinal). |
+| `public/assets/nebula/` | `galaxy-panorama.png` (uzak küre) ve `galaxy-veil.png` (saydam gaz katmanları). |
 | `src/experience/Sky.tsx`, `Starfield.tsx`, `Beacons.tsx` | Ayrıntılı galaksi dokulu, dünya konumu sabit uzak küre; keskin küçük yıldızlar ve seçilmiş az sayıda dört kollu parıltı; yakın toz; uzak anı yıldızlarının parıltısı. |
 | `src/experience/Constellation.tsx` | Y kenarlarını iki ucu keşfedilince, korona kenarından başlayarak açar. |
 | `src/experience/Scene.tsx`, `quality.ts`, `timing.ts` | Tek Canvas, bloom + ACES + vinyet, bağlam kaybı, kalite yöneticisi, ölçüm kancası. |
 | `src/App.tsx`, `src/ui/*`, `src/styles.css` | HTML arayüz; `ui/StarTarget.tsx` yıldızın erişilebilir hedefi ve ipucu; `ui/Dialogs.tsx` yıldızdan doğan/oraya dönen anı geçişi. |
 | `scripts/*.mjs` | Headless Chrome ile gerçek GPU’da otomatik kontroller, ölçüm, ekran görüntüsü ve video. |
-| `docs/ekranlar-dokulu-pilot/` | Dokulu açılış pilotu: referans, önce (fa81b1c) ve sonra; açılış, bakınma, ilk uçuş, eve dönüş. |
-| `docs/ekranlar-bulutsu-revizyon/` | 2 Kasım bulutsu revizyonu: Google referansı, 5d412ab, c9449cb ve revizyon aynı kadrajlarda. |
-| `docs/ekranlar-y-surumu/` | Y sürümünün (c9449cb) önce/sonra karşılaştırmaları, kabul kareleri ve videoları. Eski klasörler önceki sürümlere aittir. |
+| `docs/` | Tur notları ve inceleme belgeleri. |
+
+Önceki turların ekran görüntüleri ve videoları (`docs/ekranlar*`, `docs/galaksi-yenileme/*.jpg|webm`) 2 Kasım 2026’da repodan kaldırıldı; `57ac112` ve öncesindeki commit’lerde git geçmişinde duruyor. Yeni kareler `pnpm dogrula:*` ile `scripts/.cikti/` altına yeniden üretilir.
 
 ## Dokulu bulutsu açılış pilotu (Claude, 2 Kasım 2026, ikinci tur)
 
@@ -83,7 +83,7 @@ React 19.3 · TypeScript 7 · Vite 8 · three 0.186 · @react-three/fiber 9.8 ·
 - mor/pembe ve turkuaz/şampanya bölgeleri;
 - başlığın tarafında sakin bir alan.
 
-Görev tanımı `our-little-universe-nebula-pilot/CLAUDE-TASK.md` dosyasında. Kapsam:
+Görev tanımı `our-little-universe-nebula-pilot/CLAUDE-TASK.md` paketindeydi (paket uygulandıktan sonra klasörden kaldırıldı). Kapsam:
 - açılış ve genel görünüm;
 - sürükleyerek bakınma;
 - ilk yıldıza uçuş ve eve dönüş.
@@ -95,10 +95,10 @@ Görev tanımı `our-little-universe-nebula-pilot/CLAUDE-TASK.md` dosyasında. K
 | Paket dosyası | Konum | Not |
 |---|---|---|
 | `reference/approved-look.png` | `referanslar/nebula-approved-look.png` | Tasarım hedefi. Sahnede **kullanılmaz**: arka plan, kameraya sabit düzlem ya da küre dokusu değildir. |
-| `textures/nebula-cyan-gold.png` | `public/assets/nebula/nebula-cyan-gold.png` | 1672×941 RGBA, düz alfa. Orijinal korunur; türev dosya üretilmedi. |
-| `textures/nebula-rose-violet.png` | `public/assets/nebula/nebula-rose-violet.png` | Aynı. |
+| `textures/nebula-cyan-gold.png` | `public/assets/nebula/nebula-cyan-gold.png` (kaldırıldı) | 1672×941 RGBA, düz alfa. Orijinal korunur; türev dosya üretilmedi. |
+| `textures/nebula-rose-violet.png` | `public/assets/nebula/nebula-rose-violet.png` (kaldırıldı) | Aynı. |
 
-SHA-256 değerleri paket `manifest.json` ile aynı.
+SHA-256 değerleri paket `manifest.json` ile aynıydı. Galaksi yenilemesinde (`57ac112`) bu iki dokunun yerini `galaxy-veil.png` aldı; kodda kullanılmadıkları için 2 Kasım 2026’da silindiler, git geçmişinde duruyorlar.
 
 Sahne öncesi inceleme:
 - **Saydam pikseller:** RGB değerleri doygun mavi, macenta ve kırmızı; düz alfayla süzülünce kenarda **renk saçağı ve hale** üretirdi.
@@ -193,17 +193,7 @@ Ortam: Windows 11, AMD Renoir entegre GPU, ANGLE/D3D11, Chrome headless gerçek 
 
 ### Görsel kabul malzemesi
 
-`docs/ekranlar-dokulu-pilot/`. “Önce” kareleri fa81b1c’den, “sonra” kareleri pilottan; aynı betik, viewport, kamera ve kademe.
-- `referans-once-sonra-acilis.jpg`: referans görsel · önce · sonra (1920×1080 açılış).
-- `once-sonra-masaustu-<1..7>.jpg` ve `once-sonra-telefon-<1..7>.jpg`: solda önce, sağda sonra. Adımlar:
-  1. açılış
-  2. sola bakış
-  3. sağa bakış
-  4. altına uçuşun ortası
-  5. altın varış
-  6. eve dönüşün ortası
-  7. genel görünüm
-- `sonra-masaustu-acilis-tam.jpg`, `sonra-telefon-acilis-tam.jpg`: tam boy açılış.
+`docs/ekranlar-dokulu-pilot/` (kaldırıldı; git geçmişinde). “Önce” kareleri fa81b1c’den, “sonra” kareleri pilottandı; aynı betik, viewport, kamera ve kademe. Adımlar: açılış, sola bakış, sağa bakış, altına uçuşun ortası, altın varış, eve dönüşün ortası, genel görünüm. Yeniden üretmek için `pnpm dogrula:pilot`.
 
 ### Kalan görsel sınırlamalar
 
@@ -318,20 +308,7 @@ Gerçek telefon ölçümü yapılmadı.
 
 ### Görsel kabul malzemesi (bu tur)
 
-`docs/ekranlar-bulutsu-revizyon/`:
-
-- `dortlu-referans-acilis.jpg`, `dortlu-referans-ucus.jpg`:
-  - sol üst: Google referansı (tarayıcı çubuğu kırpıldı);
-  - sağ üst: 5d412ab;
-  - sol alt: c9449cb;
-  - sağ alt: **revizyon**.
-  - 1440×900 açılış ve ikiliye uçuşun ortası. Kadrajlar 16:9’a kırpıldı.
-- `uclu-masaustu-<1..6>.jpg`, `uclu-telefon-<1..6>.jpg`: soldan sağa **5d412ab · c9449cb · revizyon**.
-  - Kareler aynı betik ve adımlarla çekildi: açılış, altına uçuş ortası, altın varış, ikiliye uçuş ortası, ikili varış, genel görünüm.
-  - Masaüstü yüksek kademededir. Telefon 390×844 emülasyonu, orta kademededir; gerçek telefonlar da ortadan başlar.
-  - 5d412ab’de kademe sabitleme yoktu; orada kalite yöneticisinin seçtiği kademe kullanıldı.
-  - Açılış ve genel görünüm, takımyıldız Y’ye geçtiği için 5d412ab’de farklı kadrajdadır.
-- `revizyon-masaustu-acilis.jpg`, `revizyon-telefon-acilis.jpg`: revizyonun tam boy açılış kareleri.
+`docs/ekranlar-bulutsu-revizyon/` (kaldırıldı; git geçmişinde): Google referansı, 5d412ab, c9449cb ve revizyonun aynı kadrajlarda dörtlü/üçlü karşılaştırmaları (açılış, altına uçuş ortası, altın varış, ikiliye uçuş ortası, ikili varış, genel görünüm) ve revizyonun tam boy açılış kareleri.
 
 **Bu yön, Hazret’in görsel kabulü gelene kadar tamamlanmış sayılmaz.** Kabul edilmezse ayarlanabilecek başlıca değişkenler: ana turkuaz-yeşil gövdenin parlaklığı ve kapladığı alan, ince kenar ayrıntısının miktarı, mavi ile mor/fuşya dengesi ve toz yoğunluğu. Gerekirse bunların yanına özel hazırlanmış bulutsu dokuları da eklenebilir.
 
@@ -417,11 +394,7 @@ Sonuç: yeni bulutsu bu entegre GPU’da yüksek kademede 1440’ta p50’yi ~1�
 
 ## Görsel kabul malzemesi
 
-Bu turun malzemesi yukarıda (“Görsel kabul malzemesi (bu tur)”). 1 Kasım (c9449cb) malzemesi, `docs/ekranlar-y-surumu/`:
-
-- `once-sonra-<masaustu|telefon>-<1..6>.jpg`: aynı betik, aynı GPU ve aynı adımlarla **solda önceki sürüm (5d412ab), sağda bu sürüm**: açılış, altına uçuşun ortası, altın varış, ikiliye uçuşun ortası, ikili varış, genel görünüm. Açılış ve genel görünüm kareleri Y düzeni nedeniyle bilerek farklı kadrajdadır; varış kareleri aynı yıldız kadrajındadır. “Sonra” kareleri, kalite yöneticisinin o çekimde seçtiği **orta** kademededir.
-- `v-*`: 360×740 açılış ve Y, 430×932 ipucu ve anı kartı, 844×390 ipucu ve Y, 1440×900 ipucu ve anı kartı, 1920×1080 Y; `s-*`: yıldıza dokunarak açılan anı (masaüstü ve telefon).
-- `video-masaustu-ucus-dokunma-ani.mp4`, `video-telefon-ucus-dokunma-ani.mp4` (~26 sn, gerçek hızda): açılış → uçuş → varış ipucu → yıldıza dokunma → ışık dalgası ve kartın yıldızdan doğması → kapanış → ikili yıldıza uçuş → genel görünüm. Bulutsu ayrıntısının uçuş sırasında korunduğu buradan izlenebilir.
+Bu turun malzemesi yukarıda (“Görsel kabul malzemesi (bu tur)”). 1 Kasım (c9449cb) malzemesi `docs/ekranlar-y-surumu/` klasöründeydi (kaldırıldı; git geçmişinde): 5d412ab ile önce/sonra kareleri, çeşitli ekran boyutlarında kabul kareleri ve ~26 sn’lik uçuş–dokunma–anı videoları (`scripts/video.mjs` ile yeniden üretilir).
 
 **Görsel kabul Hazret’e aittir**; bu dosyalar kabul değil, kabul için malzemedir.
 

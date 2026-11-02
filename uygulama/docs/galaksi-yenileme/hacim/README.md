@@ -27,9 +27,7 @@ Telefon görüntüleri emülasyondur. Değişiklikler yereldir; push/deploy yap�
 
 ## Kayıtlar
 
-- [Aydınlık açılış](acilis-masaustu.jpg)
-- [Telefon emülasyonu](acilis-telefon.jpg)
-- [En uzak yıldıza uçuş videosu](derin-ucus.webm) — yalnız 3B kanvas, HTML arayüzü hariç.
+Aydınlık açılış (masaüstü ve telefon emülasyonu) kareleri ile en uzak yıldıza uçuş videosu (`derin-ucus.webm`, yalnız 3B kanvas) repodan kaldırıldı; `57ac112` commit’inde git geçmişinde duruyor.
 
 Aynı tarayıcı oturumundaki 1920×1080 yüksek kalite karşılaştırmasında hacim kapalı p50 25.3–28.2 ms, açık 29.4 ms ölçüldü; yalnız dokulu gaz da kapatıldığında 22.4 ms. Normal kullanımda mevcut otomatik kalite düşürme sürer. Bu entegre GPU örneği cihazlar arası FPS garantisi değildir.
 

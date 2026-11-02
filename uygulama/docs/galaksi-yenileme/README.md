@@ -8,7 +8,7 @@
 ## Uygulama
 
 - `Sky.tsx`: 6800 birim yarıçaplı, dünya konumu sabit bir uzak küre. Görsel açılış yönünde yaklaşık 103 derecelik bir alana yerleştiriliyor; kenarlar karanlık uzaya yumuşakça bağlanıyor. Kameranın konumu değiştiğinde perspektif değişiyor. Her karede gürültü hesaplayan shader ve büyük küp render hedefi gerekmiyor.
-- `texturedNebulaLayout.ts`: yüksek/orta/düşük kalitede üç/iki/bir hafif saydam gaz katmanı, 1600–4200 birim uzaklıkta. Eski iki yoğun dokunun altı kez tekrarlanması kaldırıldı. Kaynak dosyalar tarihsel karşılaştırma için korundu.
+- `texturedNebulaLayout.ts`: yüksek/orta/düşük kalitede üç/iki/bir hafif saydam gaz katmanı, 1600–4200 birim uzaklıkta. Eski iki yoğun dokunun altı kez tekrarlanması kaldırıldı. Kullanılmayan kaynak dosyalar sonradan silindi; git geçmişinde duruyorlar.
 - `Nebula.tsx`: mevcut hareketli yerel gaz korunuyor; yoğunluğu bütün rotalarda %5,5–12 aralığında. Uzaktaki ayrıntıyı örten mavi sis geri gelmiyor.
 - `Starfield.tsx`: arka plan yıldızlarının ekran boyutu ve minimum parlaklığı azaltıldı. Anı yıldızlarının geometrisi, tıklama hedefi, kamera yolları, içerik ve Y düzeni değişmedi.
 - Etiketlere, yıldız ipucuna ve alt bilgiye kontrast desteği eklendi.
@@ -17,9 +17,7 @@ Bu yaklaşım, gerçek 3B kamera/yıldızlar ile dokulu uzak küre ve saydam gaz
 
 ## Görseller
 
-- [Önce](once-masaustu.jpg)
-- [Sonra](sonra-masaustu.jpg)
-- [Telefon emülasyonu](sonra-telefon.jpg)
+Önce/sonra masaüstü ve telefon emülasyonu kareleri (`once-masaustu.jpg`, `sonra-masaustu.jpg`, `sonra-telefon.jpg`) repodan kaldırıldı; `57ac112` commit’inde git geçmişinde duruyor.
 
 Kaynaklar: `public/assets/nebula/galaxy-panorama.png` (2.67 MB), `public/assets/nebula/galaxy-veil.png` (1.78 MB, alfa korunmuştur). Ağdan iki yeni görsel yüklenir. Üretim yöntemi ve tam yönergeler: [gorsel-uretim.md](gorsel-uretim.md).
 
