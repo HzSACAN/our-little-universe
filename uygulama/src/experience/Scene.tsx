@@ -29,6 +29,8 @@ interface SceneProps {
   visited: StarId[];
   running: boolean;
   interactive: boolean;
+  /** Bir dialog sahnenin önünde açık: arka plan bulanıklığının maliyeti sahneye yazılmaz. */
+  dialogOpen: boolean;
   onArrive: (flightId: number) => void;
   onSelect: (id: StarId) => void;
   onContextLost: () => void;
@@ -43,7 +45,7 @@ const disabled = new Set(
 );
 
 export function Scene(props: SceneProps) {
-  const { layout, at, flight, bridge, tier, visited, running, interactive, onArrive, onSelect, onContextLost, onSlow } = props;
+  const { layout, at, flight, bridge, tier, visited, running, interactive, dialogOpen, onArrive, onSelect, onContextLost, onSlow } = props;
   const q = qualitySettings(tier);
   return (
     <Canvas
@@ -71,7 +73,7 @@ export function Scene(props: SceneProps) {
       <CameraRig layout={layout} at={at} flight={flight} bridge={bridge} onArrive={onArrive} running={running} />
       {!disabled.has('hacim') && <JourneyNebula tier={tier} bridge={bridge} />}
       <LabelProjector bridge={bridge} />
-      <QualityGovernor tier={tier} running={running} onSlow={onSlow} />
+      <QualityGovernor tier={tier} running={running} paused={dialogOpen} onSlow={onSlow} />
       <PerfProbe tier={tier} />
       {!disabled.has('post') && (
       <EffectComposer multisampling={q.multisampling} frameBufferType={HalfFloatType} resolutionScale={1}>
@@ -111,18 +113,28 @@ function ContextWatcher({ onLost }: { onLost: () => void }) {
 /**
  * Sürekli yavaş çizimde bir alt kalite kademesine iner. Önce piksel oranı,
  * bulutsu yoğunluğu ve bloom geçiş sayısı düşer; görsel dil korunur.
+ * Kademe geri yükselmez: dialog açıkken ölçüm durur, yoksa mektubun bulanık
+ * arka planı sahneyi kalıcı olarak düşük kaliteye indirirdi.
  */
 const fixedTier = forcedTier() !== null;
 
-function QualityGovernor({ tier, running, onSlow }: { tier: QualityTier; running: boolean; onSlow: () => void }) {
+interface QualityGovernorProps {
+  tier: QualityTier;
+  running: boolean;
+  paused: boolean;
+  onSlow: () => void;
+}
+
+function QualityGovernor({ tier, running, paused, onSlow }: QualityGovernorProps) {
   const window = useRef(createQualityWindow());
   const clock = useRef(createFrameClock());
+  // Dialog kapanınca ısınma süresiyle yeni pencere: kapanış animasyonu da sayılmaz.
   useLayoutEffect(() => {
     window.current = createQualityWindow();
     restartFrameClock(clock.current);
-  }, [tier, running]);
+  }, [tier, running, paused]);
   useFrame((_, delta) => {
-    if (!running || tier === 'low' || fixedTier) return;
+    if (!running || paused || tier === 'low' || fixedTier) return;
     if (shouldLowerQuality(window.current, frameSeconds(clock.current, delta))) onSlow();
   });
   return null;

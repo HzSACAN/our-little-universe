@@ -150,6 +150,7 @@ export default function App() {
               tier={tier}
               running={visible}
               interactive={!travelling && !state.listOpen && !state.detailOpen && !state.letterOpen}
+              dialogOpen={state.listOpen || state.detailOpen || state.letterOpen}
               onArrive={onArrive}
               onSelect={tapStar}
               onContextLost={onContextLost}
