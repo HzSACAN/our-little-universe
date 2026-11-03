@@ -22,7 +22,8 @@ describe('altı yıldızlı hikâye', () => {
       if (!photo) continue;
       expect(files, id).toContain(photo.src);
       expect(photo.alt.trim().length, `${id} alt metni`).toBeGreaterThan(10);
-      expect(Math.max(photo.width, photo.height), id).toBeLessThanOrEqual(1600);
+      expect(Math.min(photo.width, photo.height), id).toBeLessThanOrEqual(1200);
+      expect(Math.max(photo.width, photo.height), id).toBeLessThanOrEqual(2400);
     }
   });
   it('sıradaki keşfedilmemiş durağa döner ve gerektiğinde başa sarar', () => {

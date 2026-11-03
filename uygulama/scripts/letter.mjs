@@ -36,6 +36,9 @@ await b.wait(400); // hedef ilk karede konumlanır
 await b.eval(`document.querySelector('.star-target').focus()`);
 await press('Enter', 'Enter', 13, '\r'); await b.wait(900);
 ok('anı dialogu açık', (await st()).memory);
+// Metin ve düğmeler kalbin arka yüzünde: önce kalp döner.
+await b.eval(`document.querySelector('dialog.memory-dialog[open] .heart-turn').click()`); await b.wait(500);
+ok('kalp döndü, odak başlıkta', await b.eval(`document.activeElement?.id === 'memory-title'`));
 const toLetter = await b.eval(`(() => { const btn = [...document.querySelectorAll('dialog.memory-dialog[open] button')].find(x => /mektu/i.test(x.textContent)); if (!btn) return null; btn.focus(); return btn.textContent.trim(); })()`);
 ok('anı kartında mektup düğmesi', !!toLetter, toLetter ?? '');
 await press('Enter', 'Enter', 13, '\r'); await b.wait(600);

@@ -1,7 +1,7 @@
 // Yıldıza dokunarak anı açma: gerçek fare ve dokunma girdisiyle. Uzak yıldıza dokunma
 // yolculuk başlatır; varıştan sonra yıldıza dokunma anıyı açar. Sürükleme, çoklu dokunma,
 // touchcancel ve varıştan önce başlayan basış anı açmaz. İkili yıldızın eşi de aynı anıyı açar.
-import { launch, BASE } from './cdp.mjs';
+import { launch, BASE, titleOf } from './cdp.mjs';
 import { runChecks } from './check.mjs';
 
 const b = await launch();
@@ -69,7 +69,7 @@ await runChecks(async ({ ok, consoleClean }) => {
   ok('kapanış animasyonu oynuyor', await b.eval(`document.querySelector('dialog.memory-dialog').classList.contains('closing')`));
   await b.wait(700);
   s = await st();
-  ok('kapanınca dialog kalmaz, aynı yıldızda', s.dialogs === 0 && s.cls.includes('phase-arrived') && s.title === 'Başladığımız yer');
+  ok('kapanınca dialog kalmaz, aynı yıldızda', s.dialogs === 0 && s.cls.includes('phase-arrived') && s.title === titleOf('gold'));
   ok('kapanınca odak yıldızın erişilebilir hedefinde', /^Anıyı aç/.test(s.focus ?? ''), s.focus);
   ok('anı açıldıktan sonra ipucu tekrarlanmaz', (await b.eval(`document.querySelector('.star-hint').dataset.show`)) === 'false');
 
@@ -95,12 +95,12 @@ await runChecks(async ({ ok, consoleClean }) => {
   await click(tb.companion.x, tb.companion.y);
   await b.wait(1000);
   s = await st();
-  ok('eş yıldıza dokunmak aynı anıyı açar', s.memory && (await b.eval(`document.querySelector('#memory-title')?.textContent`)) === 'İkimizin ışığı');
+  ok('eş yıldıza dokunmak aynı anıyı açar', s.memory && (await b.eval(`document.querySelector('#memory-title')?.textContent`)) === titleOf('binary'));
   await closeMemory();
   tb = await target();
   await click(tb.x, tb.y);
   await b.wait(1000);
-  ok('ana gövdeye dokunmak da aynı anıyı açar', (await st()).memory && (await b.eval(`document.querySelector('#memory-title')?.textContent`)) === 'İkimizin ışığı');
+  ok('ana gövdeye dokunmak da aynı anıyı açar', (await st()).memory && (await b.eval(`document.querySelector('#memory-title')?.textContent`)) === titleOf('binary'));
   await closeMemory();
 
   // Varıştan önce başlayan basış: altına dönüş uçuşu sırasında basılı tutup varışta bırakmak anı açmaz.

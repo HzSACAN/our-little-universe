@@ -1,4 +1,4 @@
-// Anı fotoğrafını yayına hazırlar: yönü düzeltir, uzun kenarı 1600 px'e indirir,
+// Anı fotoğrafını yayına hazırlar: yönü düzeltir, kısa kenarı 1200, uzun kenarı 2400 px'e indirir,
 // konum (GPS) dahil bütün meta verileri siler ve public/anilar/<yıldız>.jpg olarak yazar.
 // Kullanım: node scripts/fotograf.mjs <yıldız> <kaynak-dosya>
 // Çıktıdaki `photo` satırı src/content/memories.ts içine yapıştırılır; alt ve kadraj elle yazılır.
@@ -20,7 +20,8 @@ mkdirSync(dirname(out), { recursive: true });
 
 execFileSync('ffmpeg', [
   '-v', 'error', '-y', '-i', source,
-  '-vf', "scale='if(gte(iw,ih),min(1600,iw),-2)':'if(gte(iw,ih),-2,min(1600,ih))':flags=lanczos",
+  // Kısa kenar en çok 1200, uzun kenar en çok 2400 px (uzun telefon fotoğrafları da keskin kalır).
+  '-vf', "scale=w='min(iw,min(1200*max(1,iw/ih),2400*min(1,iw/ih)))':h=-2:flags=lanczos",
   '-map_metadata', '-1', '-frames:v', '1', '-q:v', '3', out,
 ], { stdio: 'inherit' });
 

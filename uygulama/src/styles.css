@@ -643,14 +643,94 @@ dialog[open] {
   background: rgba(4, 6, 22, 0.5);
   font-size: 15px;
 }
-.memory-dialog[open] {
-  display: grid;
-  grid-template-columns: 1fr 1.1fr;
-  width: 900px;
+/* ---------- Anı kartı: kalp ---------- */
+/* Kartın kendisi bir kalptir. Ön yüzde fotoğraf ve el yazısı; "Anıyı oku" ile kalp döner,
+   arka yüzde metin kalbin kenarlarını izleyerek akar (shape-outside). Kalp 1 / 0.92 oranındadır;
+   kenar poligonları Dialogs.tsx'teki kalp yoluyla aynı eğriden hesaplandı. Telefonda kart
+   dikdörtgendir (aşağıdaki FLAT_CARD sorgusu). */
+.memory-dialog {
+  --heart-a: 0.92;
+  --heart-w: min(820px, calc(100vw - 48px), calc((100dvh - 48px) / 0.92));
+  --heart-clip: url(#heart-clip);
+  --flow-gap: 26px;
+  --flow-l: polygon(0 0, 52% 0%, 25.3% 4%, 15.7% 8%, 9.5% 12%, 5.1% 16%, 2.3% 20%, 0.6% 24%, 0% 28%, 0.3% 32%, 1.3% 36%, 2.9% 40%, 5.3% 44%, 8.4% 48%, 12.1% 52%, 16.3% 56%, 21.5% 60%, 27.3% 64%, 33.5% 68%, 40.7% 72%, 48.4% 76%, 56.3% 80%, 64.4% 84%, 73.4% 88%, 82.4% 92%, 91.3% 96%, 100% 100%, 0 100%);
+  --flow-r: polygon(100% 0, 48% 0%, 74.7% 4%, 84.3% 8%, 90.5% 12%, 94.9% 16%, 97.7% 20%, 99.4% 24%, 100% 28%, 99.7% 32%, 98.7% 36%, 97.1% 40%, 94.7% 44%, 91.6% 48%, 87.9% 52%, 83.7% 56%, 78.5% 60%, 72.7% 64%, 66.5% 68%, 59.3% 72%, 51.6% 76%, 43.7% 80%, 35.6% 84%, 26.6% 88%, 17.6% 92%, 8.7% 96%, 0% 100%, 100% 100%);
+  width: var(--heart-w);
+  height: calc(var(--heart-w) * var(--heart-a));
+  max-width: none;
+  max-height: none;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  overflow: visible;
 }
-.memory-art {
+.memory-dialog .close,
+.heart-turn-back {
+  top: -6px;
+  right: -6px;
+  background: rgba(4, 6, 22, 0.78);
+  border: 1px solid rgba(232, 197, 143, 0.35);
+}
+.heart-turn-back {
+  position: absolute;
+  right: auto;
+  left: -6px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--cream);
+  font-size: 19px;
+  pointer-events: auto;
+  transition: opacity 0.3s, visibility 0s;
+}
+.heart:not(.is-turned) .heart-turn-back {
+  opacity: 0;
+  visibility: hidden;
+  transition-delay: 0s, 0.3s;
+}
+.heart {
+  --heart-glow: rgba(245, 194, 122, 0.4);
   position: relative;
-  min-height: 520px;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  filter: drop-shadow(0 0 1.5px rgba(255, 228, 186, 0.85)) drop-shadow(0 0 30px var(--heart-glow))
+    drop-shadow(0 30px 50px rgba(0, 0, 0, 0.45));
+}
+.heart--binary { --heart-glow: rgba(150, 180, 255, 0.4); }
+.heart--rose { --heart-glow: rgba(226, 110, 170, 0.42); }
+.heart--azure { --heart-glow: rgba(72, 202, 188, 0.4); }
+.heart--violet { --heart-glow: rgba(171, 120, 232, 0.42); }
+.heart--dawn { --heart-glow: rgba(255, 214, 170, 0.42); }
+.heart-defs {
+  position: absolute;
+}
+.heart-face {
+  position: absolute;
+  inset: 0;
+  clip-path: var(--heart-clip);
+  pointer-events: auto;
+  transition: transform 0.3s cubic-bezier(0.45, 0, 0.55, 1), visibility 0s;
+}
+/* Dönüş: görünen yüz ortasına doğru incelir, sonra öbür yüz açılır. */
+.heart-back,
+.heart.is-turned .heart-front {
+  transform: scaleX(0);
+  visibility: hidden;
+  transition-delay: 0s, 0.3s;
+}
+/* Açılacak yüz hemen görünür (ama hâlâ ince) olur: odak dönüş sürerken ona geçebilir. */
+.heart-front,
+.heart.is-turned .heart-back {
+  transform: none;
+  visibility: visible;
+  transition-delay: 0.3s, 0s;
+}
+
+/* Ön yüz */
+.heart-front .memory-art {
+  position: absolute;
+  inset: 0;
   overflow: hidden;
   isolation: isolate;
 }
@@ -665,24 +745,35 @@ dialog[open] {
     radial-gradient(ellipse at 25% 85%, rgba(109, 232, 222, 0.3), transparent 55%),
     linear-gradient(160deg, #121a5a, #080a26 65%, #1d1446);
 }
+.memory-photo {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--focus);
+}
 .art-glow {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 120%, rgba(4, 6, 22, 0.9), transparent 60%);
+  background: linear-gradient(to top, rgba(4, 6, 22, 0.95) 10%, rgba(4, 6, 22, 0.55) 36%, transparent 60%);
 }
 .art-script {
   position: absolute;
-  left: 10%;
-  right: 10%;
-  top: 52%;
-  font: italic 40px/1.05 Celestial, Georgia, serif;
+  left: 14%;
+  right: 14%;
+  bottom: 30%;
+  font: italic clamp(26px, calc(var(--heart-w) * 0.048), 40px) / 1.08 Celestial, Georgia, serif;
   color: #efe7d8;
+  text-align: center;
+  text-shadow: 0 2px 18px rgba(4, 6, 22, 0.85);
 }
 .photo-placeholder {
   position: absolute;
-  left: 8%;
-  right: 8%;
-  bottom: 26px;
+  left: 22%;
+  right: 22%;
+  top: 30%;
   padding: 14px 12px;
   border: 1px dashed rgba(244, 240, 232, 0.3);
   font-size: 11px;
@@ -696,61 +787,78 @@ dialog[open] {
   font-size: 18px;
   margin-bottom: 6px;
 }
-/* Gerçek fotoğraf: alanı doldurur, el yazısı altta gece rengine karışan bir geçişin üstünde okunur. */
-.memory-photo {
+.heart-turn {
   position: absolute;
-  inset: 0;
-  z-index: -1;
-  width: 100%;
+  left: 50%;
+  bottom: 17%;
+  translate: -50% 0;
+  gap: 16px;
+  white-space: nowrap;
+}
+
+/* Arka yüz: metin kalbin içinde akar; çok uzun metin kalbin içinde kayar. */
+.heart-back {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  background: radial-gradient(ellipse at 50% 92%, var(--heart-glow), transparent 55%),
+    radial-gradient(ellipse at 50% 0%, rgba(84, 70, 160, 0.35), transparent 50%),
+    linear-gradient(170deg, #14163d, #0b0d2a 60%, #170f31);
+}
+.heart-back::-webkit-scrollbar {
+  display: none;
+}
+.heart-flow {
+  float: left;
+  width: 50%;
   height: 100%;
-  object-fit: cover;
-  object-position: var(--focus);
+  shape-outside: var(--flow-l);
+  shape-margin: var(--flow-gap);
 }
-.has-photo .art-glow {
-  background: linear-gradient(to top, rgba(4, 6, 22, 0.92), rgba(4, 6, 22, 0.35) 38%, transparent 62%);
-}
-.has-photo .art-script {
-  top: auto;
-  bottom: 30px;
-  text-shadow: 0 2px 18px rgba(4, 6, 22, 0.8);
+.heart-flow--right {
+  float: right;
+  shape-outside: var(--flow-r);
 }
 .memory-content {
-  padding: 70px 46px 34px;
-  display: flex;
-  flex-direction: column;
+  max-width: 76%;
+  margin: 0 auto;
+  padding-top: calc(var(--heart-w) * var(--heart-a) * 0.2);
+  text-align: center;
+}
+.heart-back .eyebrow {
+  display: block;
 }
 .memory-content h2 {
-  font: 400 46px/1.04 Celestial, Georgia, serif;
-  margin: 22px 0;
+  font: 400 clamp(28px, calc(var(--heart-w) * 0.056), 46px) / 1.06 Celestial, Georgia, serif;
+  margin: 12px 0 14px;
+}
+.memory-content h2:focus {
+  outline: none;
 }
 .mini-rule {
   width: 32px;
   height: 1px;
   background: var(--gold);
-  margin-bottom: 22px;
+  margin: 0 auto 16px;
 }
 .memory-text {
-  font: 18px/1.7 Celestial, Georgia, serif;
-  color: #ccd2df;
+  font: clamp(14px, calc(var(--heart-w) * 0.0235), 19px) / 1.62 Celestial, Georgia, serif;
+  color: #d3d8e4;
+}
+.memory-text + .memory-text {
+  margin-top: 0.8em;
 }
 .example-note {
   font-size: 10px;
-  line-height: 1.8;
+  line-height: 1.7;
   color: var(--dim);
-  margin-top: 24px;
+  margin-top: 14px;
 }
 .memory-actions {
-  margin-top: auto;
-  padding-top: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  padding: 14px 0 calc(var(--heart-w) * var(--heart-a) * 0.04);
 }
-.memory-actions > span {
-  font-size: 10px;
-  color: var(--dim);
-  letter-spacing: 2px;
+.memory-actions .text-button {
+  gap: 14px;
 }
 .list-dialog[open] {
   width: 500px;
@@ -1026,41 +1134,6 @@ dialog[open] {
     max-width: calc(100% - 24px);
     max-height: calc(100dvh - 24px - var(--safe-top) - var(--safe-bottom));
   }
-  .memory-dialog[open] {
-    display: block;
-    width: 100%;
-  }
-  .memory-art {
-    min-height: 220px;
-  }
-  .memory-art.has-photo {
-    height: clamp(240px, 44dvh, 400px);
-  }
-  .memory-photo {
-    object-position: var(--focus-m);
-  }
-  .art-script {
-    top: 30%;
-    font-size: 30px;
-  }
-  .has-photo .art-script {
-    top: auto;
-    bottom: 18px;
-  }
-  .photo-placeholder {
-    bottom: 16px;
-    font-size: 10px;
-  }
-  .memory-content {
-    padding: 26px 22px 24px;
-  }
-  .memory-content h2 {
-    font-size: 34px;
-    margin: 14px 0;
-  }
-  .memory-text {
-    font-size: 16px;
-  }
   .list-dialog[open] {
     width: 100%;
     padding: 50px 22px 24px;
@@ -1128,9 +1201,43 @@ dialog[open] {
 .memory-art--azure { background: radial-gradient(ellipse at 60% 40%, #48cabc55, transparent 65%), #092730; }
 .memory-art--violet { background: radial-gradient(ellipse at 60% 40%, #ab78e855, transparent 65%), #1d1538; }
 .memory-art--dawn { background: radial-gradient(ellipse at 60% 40%, #ffe4b366, transparent 65%), #30231f; }
-/* Yatay telefonda metin kayarken fotoğraf görünür kalır. */
+/* Telefonda (dikey ve yatay) kart dikdörtgendir: kalbin iki yüzü dönmeden alt alta durur;
+   fotoğraf üstte, metin altta. Dialogs.tsx'teki FLAT_CARD sorgusuyla aynı. */
+@media (max-width: 700px), (max-aspect-ratio: 9/10), (max-height: 520px) and (min-aspect-ratio: 9/10) {
+  .memory-dialog {
+    width: 100%;
+    height: auto;
+    max-width: calc(100% - 24px);
+    max-height: calc(100dvh - 24px - var(--safe-top) - var(--safe-bottom));
+    border: 1px solid rgba(232, 197, 143, 0.22);
+    background: #0b0d2a;
+    box-shadow: 0 30px 140px rgba(0, 0, 0, 0.6);
+    overflow: auto;
+  }
+  .memory-dialog .close { top: 14px; right: 14px; }
+  .memory-dialog .heart { height: auto; filter: none; pointer-events: auto; }
+  .memory-dialog .heart .heart-face { position: relative; clip-path: none; transform: none; visibility: visible; transition: none; }
+  .memory-dialog .heart .heart-front { height: clamp(240px, 44dvh, 400px); }
+  .heart-turn, .heart-turn-back, .heart-flow { display: none; }
+  .heart-back { overflow: visible; background: none; }
+  .memory-photo { object-position: var(--focus-m); }
+  .art-glow { background: linear-gradient(to top, rgba(4, 6, 22, 0.92), rgba(4, 6, 22, 0.35) 38%, transparent 62%); }
+  .art-script { left: 10%; right: 10%; bottom: 18px; font-size: 30px; text-align: left; }
+  .photo-placeholder { top: auto; bottom: 16px; left: 8%; right: 8%; font-size: 10px; }
+  .memory-content { max-width: none; padding: 26px 22px 24px; text-align: left; }
+  .memory-content h2 { font-size: 34px; margin: 14px 0; }
+  .mini-rule { margin: 0 0 22px; }
+  .memory-text { font-size: 16px; line-height: 1.7; }
+  .memory-actions { padding: 24px 0 0; }
+}
+/* Yatay telefon: fotoğraf solda sabit, metin sağda kayar. */
 @media (max-height: 520px) and (min-aspect-ratio: 9/10) {
-  .memory-art.has-photo { position: sticky; top: 0; align-self: start; min-height: 0; height: calc(100dvh - 48px); }
+  .memory-dialog { width: min(900px, calc(100% - 48px)); }
+  .memory-dialog .heart { display: grid; grid-template-columns: 1fr 1.1fr; }
+  .memory-dialog .heart .heart-front { position: sticky; top: 0; align-self: start; height: calc(100dvh - 26px - var(--safe-top) - var(--safe-bottom)); }
+  .memory-content { padding: 40px 30px 24px; }
+  .memory-content h2 { font-size: 30px; }
+  .memory-text { font-size: 15px; }
 }
 .letter-dialog { width: 650px; padding: 58px 64px 42px; background: #f0e9dc; color: #34303c; border-color: #e8c58f; }
 .letter-dialog .eyebrow { color: #78634c; font-size: 9px; letter-spacing: 2px; }

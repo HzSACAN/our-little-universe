@@ -1,11 +1,13 @@
 // Küçük CDP sürücüsü: headless Chrome ile gerçek GPU çizimi, ekran görüntüsü ve ölçüm.
 import { spawn } from 'node:child_process';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 // Çıktılar scripts/.cikti altına yazılır. Chrome yolu CHROME ile, adres BASE ile değiştirilebilir.
 const SP = process.env.SP ?? fileURLToPath(new URL('./.cikti', import.meta.url));
 mkdirSync(SP + '/shots', { recursive: true });
 export const BASE = process.env.BASE ?? 'http://localhost:5173';
+/** Yıldızın güncel başlığı içerik dosyasından okunur; içerik değişince kontroller kırılmaz. */
+export const titleOf = (id) => readFileSync(new URL('../src/content/memories.ts', import.meta.url), 'utf8').match(new RegExp(`id: '${id}'[^}]*?title: '([^']+)'`))[1];
 const CHROME = process.env.CHROME ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const port = 9333;
 export async function launch() {

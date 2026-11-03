@@ -135,6 +135,19 @@ export function useCoarsePointer() {
   return coarse;
 }
 
+/** Bir CSS medya sorgusunun güncel sonucu; ekran döndürülünce yeniden değerlendirilir. */
+export function useMediaQuery(media: string) {
+  const [matches, setMatches] = useState(() => window.matchMedia(media).matches);
+  useEffect(() => {
+    const query = window.matchMedia(media);
+    const onChange = (e: MediaQueryListEvent) => setMatches(e.matches);
+    setMatches(query.matches);
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, [media]);
+  return matches;
+}
+
 /**
  * Sayfadaki bütün işaretçi basışlarını izleyen dokunuş koruması. Basış başladığında
  * o anki varış kimliği kaydedilir; sürükleme, pointercancel ve ikinci parmak dokunuşu bozar.

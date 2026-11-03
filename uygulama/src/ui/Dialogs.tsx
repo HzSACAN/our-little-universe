@@ -1,6 +1,7 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { letter } from '../content/letter';
 import { memories, type Memory, type StarId } from '../content/memories';
+import { useMediaQuery } from '../experience/hooks';
 import { MemoryPhoto } from './MemoryPhoto';
 
 interface ModalProps {
@@ -15,6 +16,8 @@ interface ModalProps {
   openDelay?: number;
   /** Dialogu açan öğe odaklanamıyorsa kapanınca odaklanacak öğe. */
   returnFocus?: () => HTMLElement | null;
+  /** Dialog kutusu görünmez (ör. kalp kart): kutunun boş köşelerine dokunmak da kapatır. */
+  bare?: boolean;
   children: ReactNode;
 }
 
@@ -26,12 +29,12 @@ const focusable = (el: HTMLElement | null | undefined): el is HTMLElement =>
  * Yerel dialog: odak hapsi ve Escape tarayıcıdan gelir. Kapanış (✕, Escape, dışarı tıklama)
  * kökene dönen kısa bir animasyonla biter; odak anlamlı bir öğeye geri verilir.
  */
-function Modal({ open, onClose, labelledBy, className, closeLabel, origin, openDelay = 0, returnFocus, children }: ModalProps) {
+function Modal({ open, onClose, labelledBy, className, closeLabel, origin, openDelay = 0, returnFocus, bare, children }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const lastFocus = useRef<HTMLElement | null>(null);
   const openedAt = useRef(0);
-  const props = useRef({ onClose, origin, returnFocus });
-  props.current = { onClose, origin, returnFocus };
+  const props = useRef({ onClose, origin, returnFocus, bare });
+  props.current = { onClose, origin, returnFocus, bare };
 
   // Kökenin dialog merkezine göre farkı; animasyon bu vektör boyunca büyür/küçülür.
   const aim = (dialog: HTMLDialogElement) => {
@@ -129,7 +132,8 @@ function Modal({ open, onClose, labelledBy, className, closeLabel, origin, openD
       // Açılıştaki hızlı ikinci dokunuş, henüz yerleşmeyen dialogu kapatmaz.
       if (performance.now() - openedAt.current < 650) return;
       const r = dialog.getBoundingClientRect();
-      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) requestClose();
+      const outside = e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+      if (outside || props.current.bare) requestClose();
     };
     dialog.addEventListener('close', handleClose);
     dialog.addEventListener('cancel', handleCancel);
@@ -164,7 +168,31 @@ interface MemoryDialogProps {
   openDelay: number;
 }
 
+// Kalp sınırı (clipPathUnits=objectBoundingBox), genişlik/yükseklik 1/0.92; lobları gerçek dairedir.
+// Arka yüzdeki metin akışı styles.css'teki poligonlarla aynı eğriden hesaplandı.
+const HEART = 'M.5 1C.28.8043 0 .5839 0 .2826A.26.2826 0 0 1 .5.1739A.26.2826 0 0 1 1 .2826C1 .5839.72.8043.5 1Z';
+/** Kalbin bir yüzü inceldikten sonra öbürü açılır (styles.css'teki geçişle aynı). */
+const TURN_MS = 320;
+/** Telefonda (dikey ve yatay) kart dikdörtgendir; styles.css'teki sorguyla aynı. */
+const FLAT_CARD = '(max-width: 700px), (max-aspect-ratio: 9/10), (max-height: 520px) and (min-aspect-ratio: 9/10)';
+
+/**
+ * Geniş ekranda anı kartı bir kalptir: ön yüzde fotoğraf ve el yazısı, "Anıyı oku" ile dönen
+ * arka yüzde metin kalbin kenarlarını izleyerek akar; görünmeyen yüz inert'tir. Telefonda aynı
+ * iki yüz dikdörtgen bir kartta alt alta durur.
+ */
 export function MemoryDialog({ memory, open, onClose, onNext, nextLabel, star, openDelay }: MemoryDialogProps) {
+  const flat = useMediaQuery(FLAT_CARD);
+  const [turned, setTurned] = useState(false);
+  const readRef = useRef<HTMLButtonElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    if (open) setTurned(false);
+  }, [open, memory?.id]);
+  const turn = (toBack: boolean) => {
+    setTurned(toBack);
+    setTimeout(() => (toBack ? titleRef : readRef).current?.focus({ preventScroll: true }), TURN_MS);
+  };
   return (
     <Modal
       open={open && !!memory}
@@ -175,36 +203,57 @@ export function MemoryDialog({ memory, open, onClose, onNext, nextLabel, star, o
       origin={star}
       returnFocus={star}
       openDelay={openDelay}
+      bare={!flat}
     >
       {memory && (
-        <>
-          <div className={`memory-art memory-art--${memory.id}${memory.photo ? ' has-photo' : ''}`}>
-            <MemoryPhoto memory={memory} className="memory-photo" />
-            <div className="art-glow" aria-hidden="true" />
-            <span className="art-script" dangerouslySetInnerHTML={{ __html: memory.script }} />
+        <div className={`heart heart--${memory.id}${turned && !flat ? ' is-turned' : ''}`}>
+          <svg className="heart-defs" width="0" height="0" aria-hidden="true">
+            <clipPath id="heart-clip" clipPathUnits="objectBoundingBox">
+              <path d={HEART} />
+            </clipPath>
+          </svg>
+          <div className="heart-face heart-front" inert={turned && !flat}>
+            <div className={`memory-art memory-art--${memory.id}`}>
+              <MemoryPhoto memory={memory} className="memory-photo" />
+              <div className="art-glow" aria-hidden="true" />
+              <span className="art-script" dangerouslySetInnerHTML={{ __html: memory.script }} />
+            </div>
+            <button ref={readRef} className="text-button heart-turn" type="button" onClick={() => turn(true)}>
+              Anıyı oku <span aria-hidden="true">↻</span>
+            </button>
           </div>
-          <div className="memory-content">
-            <div className="eyebrow">YILDIZ 0{memory.index}{memory.sample ? ' · ÖRNEK ANI' : ''}</div>
-            <h2 id="memory-title">{memory.title}</h2>
-            <div className="mini-rule" aria-hidden="true" />
-            {memory.text.split('\n\n').map((p) => <p className="memory-text" key={p}>{p}</p>)}
-            {memory.sample && (
-              <p className="example-note">
-                Bu anı ve metin, tasarımı göstermek için örnektir.
-                <br />
-                Gerçek hikâyenizle değiştirilecek.
-              </p>
-            )}
-            <div className="memory-actions">
-              <button className="text-button" type="button" onClick={onNext}>
-                {nextLabel} <span aria-hidden="true">↗</span>
-              </button>
-              <span>
-                0{memory.index} / 0{memories.length}
-              </span>
+          <div className="heart-face heart-back" inert={!turned && !flat}>
+            <i className="heart-flow heart-flow--left" aria-hidden="true" />
+            <i className="heart-flow heart-flow--right" aria-hidden="true" />
+            <div className="memory-content">
+              <div className="eyebrow">
+                YILDIZ 0{memory.index} / 0{memories.length}
+                {memory.sample ? ' · ÖRNEK ANI' : ''}
+              </div>
+              <h2 id="memory-title" ref={titleRef} tabIndex={-1}>
+                {memory.title}
+              </h2>
+              <div className="mini-rule" aria-hidden="true" />
+              {memory.text.split('\n\n').map((p) => <p className="memory-text" key={p}>{p}</p>)}
+              {memory.sample && (
+                <p className="example-note">
+                  Bu anı ve metin, tasarımı göstermek için örnektir.
+                  <br />
+                  Gerçek hikâyenizle değiştirilecek.
+                </p>
+              )}
+              <div className="memory-actions">
+                <button className="text-button" type="button" onClick={onNext}>
+                  {nextLabel} <span aria-hidden="true">↗</span>
+                </button>
+              </div>
             </div>
           </div>
-        </>
+          {/* Kapatma düğmesinin karşısında, sol lobun dışında; yalnız arka yüzdeyken görünür. */}
+          <button className="heart-turn-back" type="button" onClick={() => turn(false)} aria-label="Fotoğrafa dön" title="Fotoğrafa dön">
+            ↺
+          </button>
+        </div>
       )}
     </Modal>
   );

@@ -8,9 +8,9 @@ export interface MemoryPhoto {
   height: number;
   /** Ekran okuyucu için fotoğrafta ne göründüğü. */
   alt: string;
-  /** CSS object-position; masaüstündeki dikey kadraj. Varsayılan '50% 40%'. */
+  /** CSS object-position; masaüstündeki yatık kalp kadrajı. Varsayılan '50% 40%'. */
   focus?: string;
-  /** Telefondaki yatay şerit kadrajı; verilmezse `focus`. */
+  /** Telefondaki uzun kalp kadrajı; verilmezse `focus`. */
   focusMobile?: string;
 }
 
@@ -31,10 +31,11 @@ export interface Memory {
 
 export const memories: Memory[] = [
   {
-    id: 'gold', index: 1, title: 'Başladığımız yer', short: 'İlk merhaba',
-    summary: 'Sıcak, altın bir ışık. Hikâyenizin başladığı ana ait küçük bir ayrıntı bu yıldızda saklanacak.',
-    text: 'Burada ilk karşılaşmanızı anlatan kısa bir not yer alacak: o gün aklında kalan bir cümle, bir bakış ya da küçük bir ayrıntı. Şimdilik bu satırlar yalnızca yeri tutuyor.',
-    script: 'Her şey<br>burada başladı.', photoNote: 'İlk anınıza ait fotoğraf buraya gelecek', sample: true,
+    id: 'gold', index: 1, title: 'İlk görüşte aşk', short: 'İlk görüşte',
+    summary: 'Sıcak, altın bir ışık. Daha arkadaşken açtığım bir fotoğrafta, kalbimin sana döndüğü an burada saklı.',
+    text: 'Henüz o zamanlar arkadaştık. Bir gün Snapchat’te bu fotoğrafın geldi; açtım ve öylece kalakaldım. O gülümseme, o bakış… Ekrana ne kadar baktığımı hatırlamıyorum ama içimde bir şeylerin değiştiğini çok iyi hatırlıyorum.\n\nBelki sen farkında bile değildin, ama benim için her şey o fotoğrafla başladı. Sana ilk o gün âşık oldum, canımın içi.',
+    script: 'Bir fotoğraf.<br>Ve her şey değişti.', photoNote: 'İlk anınıza ait fotoğraf buraya gelecek', sample: false,
+    photo: { src: 'anilar/gold.jpg', width: 1174, height: 2400, alt: 'Yağmur, pembe bluzu ve kar tanesi kolyesiyle kameraya gülümsüyor.', focus: '50% 48%', focusMobile: '50% 36%' },
   },
   {
     id: 'binary', index: 2, title: 'İkimizin ışığı', short: 'Yan yana',

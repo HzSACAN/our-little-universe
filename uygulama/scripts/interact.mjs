@@ -1,4 +1,5 @@
-import { launch, BASE } from './cdp.mjs';
+import { launch, BASE, titleOf } from './cdp.mjs';
+const GOLD = titleOf('gold');
 import { runChecks } from './check.mjs';
 const b = await launch();
 await runChecks(async ({ ok, none, consoleClean }) => {
@@ -19,7 +20,7 @@ await b.wait(400);
 ok('uçuş sırasında gezinme kilitli', await b.eval(`[...document.querySelectorAll('.navigation button')].every(x => x.disabled)`));
 await b.eval(`document.querySelectorAll('.route-stops button')[1].click()`);
 let r = await waitFor(s => s.cls.includes('phase-arrived'));
-ok('hızlı tıklamada tek hedef (altın)', r.s.title === 'Başladığımız yer', `${r.s.title} ${r.t}ms`);
+ok('hızlı tıklamada tek hedef (altın)', r.s.title === GOLD, `${r.s.title} ${r.t}ms`);
 ok('varışta keşif sayacı 1', r.s.count?.startsWith('1 /'), r.s.count);
 
 // 2) Kanvas üzerinde sürükleme uçuş başlatmaz.
@@ -48,7 +49,7 @@ await key('Escape', 'Escape', 27);
 await b.wait(700);
 r = { s: await st() };
 ok('Escape ile kapandı, odak geri döndü', !r.s.dialog && r.s.focus?.startsWith('Anıyı aç'), r.s.focus);
-ok('kapatınca aynı yıldızda', r.s.cls.includes('phase-arrived') && r.s.title === 'Başladığımız yer');
+ok('kapatınca aynı yıldızda', r.s.cls.includes('phase-arrived') && r.s.title === GOLD);
 
 // 4) Uçuş ortasında ekran değişimi: yolculuk yeni kadraja yeniden hedeflenir.
 await b.eval(`document.querySelector('.next-destination').click()`);
@@ -81,7 +82,7 @@ const scale = (t) => Number(/scaleX\(([\d.]+)\)/.exec(t ?? '')?.[1] ?? NaN);
 // Gizlenme anına kadar bir-iki kare ilerleyebilir; 2,5 sn boyunca ilerleme olmamalı.
 ok('gizliyken uçuş ilerlemedi (≤%2)', scale(during) - scale(before) <= 0.02, `${before} → ${during} → ${after}`);
 r = await waitFor(s => s.cls.includes('phase-arrived'));
-ok('dönüşte uçuş tamamlandı', r.s.title === 'Başladığımız yer', `${r.t}ms`);
+ok('dönüşte uçuş tamamlandı', r.s.title === GOLD, `${r.t}ms`);
 
 // 6) Hareket azaltma düğmesi: kısa, durağan geçiş.
 await b.eval(`document.querySelector('.icon-button[aria-pressed]').click()`);
@@ -95,7 +96,7 @@ ok('düğmeyle hareket geri açıldı', !(await b.eval(`document.body.classList.
 // 7) Liste dialogu ile gezinme ve genel görünüm.
 await b.eval(`document.querySelector('.header .nav-link').click()`); await b.wait(400);
 await b.eval(`document.querySelectorAll('.memory-list button')[0].click()`);
-r = await waitFor(s => s.cls.includes('phase-arrived') && s.title === 'Başladığımız yer');
+r = await waitFor(s => s.cls.includes('phase-arrived') && s.title === GOLD);
 ok('listeden yıldıza yolculuk', r.t >= 0, `${r.t}ms`);
 await b.eval(`document.querySelector('.journey-hud button').click()`);
 r = await waitFor(s => s.cls.includes('phase-overview'));

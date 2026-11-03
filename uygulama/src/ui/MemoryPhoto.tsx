@@ -3,7 +3,7 @@ import type { Memory } from '../content/memories';
 
 /**
  * Anının fotoğrafı; yoksa yer tutucu. Kadraj CSS değişkenleriyle verilir:
- * masaüstünde dikey sütun (--focus), telefonda yatay şerit (--focus-m).
+ * masaüstünde yatık kalp (--focus), telefonda uzun kalp (--focus-m).
  */
 export function MemoryPhoto({ memory, className }: { memory: Memory; className: string }) {
   const photo = memory.photo;
