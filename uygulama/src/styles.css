@@ -696,6 +696,24 @@ dialog[open] {
   font-size: 18px;
   margin-bottom: 6px;
 }
+/* Gerçek fotoğraf: alanı doldurur, el yazısı altta gece rengine karışan bir geçişin üstünde okunur. */
+.memory-photo {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--focus);
+}
+.has-photo .art-glow {
+  background: linear-gradient(to top, rgba(4, 6, 22, 0.92), rgba(4, 6, 22, 0.35) 38%, transparent 62%);
+}
+.has-photo .art-script {
+  top: auto;
+  bottom: 30px;
+  text-shadow: 0 2px 18px rgba(4, 6, 22, 0.8);
+}
 .memory-content {
   padding: 70px 46px 34px;
   display: flex;
@@ -832,6 +850,15 @@ dialog[open] {
   font: 11px/1.6 Quiet, Arial, sans-serif;
   color: var(--dim);
   margin-top: 12px;
+}
+.fallback-photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 60vh;
+  margin-top: 14px;
+  object-fit: cover;
+  object-position: var(--focus-m);
 }
 
 @keyframes rise {
@@ -1006,9 +1033,19 @@ dialog[open] {
   .memory-art {
     min-height: 220px;
   }
+  .memory-art.has-photo {
+    height: clamp(240px, 44dvh, 400px);
+  }
+  .memory-photo {
+    object-position: var(--focus-m);
+  }
   .art-script {
     top: 30%;
     font-size: 30px;
+  }
+  .has-photo .art-script {
+    top: auto;
+    bottom: 18px;
   }
   .photo-placeholder {
     bottom: 16px;
@@ -1091,6 +1128,10 @@ dialog[open] {
 .memory-art--azure { background: radial-gradient(ellipse at 60% 40%, #48cabc55, transparent 65%), #092730; }
 .memory-art--violet { background: radial-gradient(ellipse at 60% 40%, #ab78e855, transparent 65%), #1d1538; }
 .memory-art--dawn { background: radial-gradient(ellipse at 60% 40%, #ffe4b366, transparent 65%), #30231f; }
+/* Yatay telefonda metin kayarken fotoğraf görünür kalır. */
+@media (max-height: 520px) and (min-aspect-ratio: 9/10) {
+  .memory-art.has-photo { position: sticky; top: 0; align-self: start; min-height: 0; height: calc(100dvh - 48px); }
+}
 .letter-dialog { width: 650px; padding: 58px 64px 42px; background: #f0e9dc; color: #34303c; border-color: #e8c58f; }
 .letter-dialog .eyebrow { color: #78634c; font-size: 9px; letter-spacing: 2px; }
 .letter-dialog .close { background: #34303c0c; color: #34303c; }

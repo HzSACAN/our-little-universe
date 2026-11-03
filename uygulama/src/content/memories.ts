@@ -1,5 +1,18 @@
-// Gerçek anılar ve fotoğraflar henüz verilmedi. Bütün içerikler örnektir.
+// Gerçek anı geldikçe `sample` false yapılır ve `photo` eklenir; örnek etiketleri kendiliğinden kalkar.
 export type StarId = 'gold' | 'binary' | 'rose' | 'azure' | 'violet' | 'dawn';
+
+export interface MemoryPhoto {
+  /** public/ altındaki göreli yol, ör. anilar/gold.jpg (scripts/fotograf.mjs üretir). */
+  src: string;
+  width: number;
+  height: number;
+  /** Ekran okuyucu için fotoğrafta ne göründüğü. */
+  alt: string;
+  /** CSS object-position; masaüstündeki dikey kadraj. Varsayılan '50% 40%'. */
+  focus?: string;
+  /** Telefondaki yatay şerit kadrajı; verilmezse `focus`. */
+  focusMobile?: string;
+}
 
 export interface Memory {
   id: StarId;
@@ -9,7 +22,11 @@ export interface Memory {
   summary: string;
   text: string;
   script: string;
+  /** Fotoğraf gelene kadar yer tutucuda görünen not. */
   photoNote: string;
+  photo?: MemoryPhoto;
+  /** true iken anı arayüzde açıkça örnek olarak işaretlenir. */
+  sample: boolean;
 }
 
 export const memories: Memory[] = [
@@ -17,37 +34,37 @@ export const memories: Memory[] = [
     id: 'gold', index: 1, title: 'Başladığımız yer', short: 'İlk merhaba',
     summary: 'Sıcak, altın bir ışık. Hikâyenizin başladığı ana ait küçük bir ayrıntı bu yıldızda saklanacak.',
     text: 'Burada ilk karşılaşmanızı anlatan kısa bir not yer alacak: o gün aklında kalan bir cümle, bir bakış ya da küçük bir ayrıntı. Şimdilik bu satırlar yalnızca yeri tutuyor.',
-    script: 'Her şey<br>burada başladı.', photoNote: 'İlk anınıza ait fotoğraf buraya gelecek',
+    script: 'Her şey<br>burada başladı.', photoNote: 'İlk anınıza ait fotoğraf buraya gelecek', sample: true,
   },
   {
     id: 'binary', index: 2, title: 'İkimizin ışığı', short: 'Yan yana',
     summary: 'Birbirinin etrafında dönen iki yıldız. Bu ışık, yan yana olduğunuzda tamamlanan bir anı için ayrıldı.',
     text: 'Bu yıldızda birlikte geçirdiğiniz, sizin için kıymetli bir günden kısa bir not olacak. Metin ve fotoğraf, Hazret’in kendi anısıyla değiştirilecek.',
-    script: 'Aynı yörünge.<br>İki ışık.', photoNote: 'İkinize ait fotoğraf buraya gelecek',
+    script: 'Aynı yörünge.<br>İki ışık.', photoNote: 'İkinize ait fotoğraf buraya gelecek', sample: true,
   },
   {
     id: 'rose', index: 3, title: 'Bir kahkaha kadar yakın', short: 'Bir kahkaha',
     summary: 'Pembe bir ışığın içinde, hatırladığınızda yeniden gülümsediğiniz bir an için küçük bir yer.',
     text: 'Yalnızca sizin anladığınız bir şaka, birlikte güldüğünüz bir an ya da yüzünüzde kalan bir gülümseme. Bu örnek metnin yerine size ait o hikâye gelecek.',
-    script: 'Bir gülüş.<br>Kocaman bir an.', photoNote: 'Birlikte güldüğünüz bir fotoğraf eklenecek',
+    script: 'Bir gülüş.<br>Kocaman bir an.', photoNote: 'Birlikte güldüğünüz bir fotoğraf eklenecek', sample: true,
   },
   {
     id: 'azure', index: 4, title: 'Küçük mutluluklarımız', short: 'Küçük şeyler',
     summary: 'Turkuaz bir yıldız. Sıradan bir günü sizin için özel yapan o küçük ayrıntılara ayrıldı.',
     text: 'Birlikte sevdiğiniz bir alışkanlık, bir şarkı veya paylaştığınız küçük bir ritüel burada anlatılabilir. Gerçek ayrıntılar henüz eklenmedi.',
-    script: 'Küçük şeyler.<br>Bizden izler.', photoNote: 'Gündelik bir anınıza ait fotoğraf eklenecek',
+    script: 'Küçük şeyler.<br>Bizden izler.', photoNote: 'Gündelik bir anınıza ait fotoğraf eklenecek', sample: true,
   },
   {
     id: 'violet', index: 5, title: 'Daha nice yollar', short: 'Yeni yollar',
     summary: 'Mor ışıkların ardında, henüz gitmediğiniz yerlere ve birlikte kurduğunuz hayallere açılan bir yıldız.',
     text: 'Birlikte gerçekleştirmek istediğiniz bir hayal ya da gitmek istediğiniz bir yer için ayrılmış örnek alan. Buraya sizin kelimeleriniz gelecek.',
-    script: 'Henüz<br>yazmadığımız sayfalar.', photoNote: 'Bir hayalinizi temsil eden görsel eklenecek',
+    script: 'Henüz<br>yazmadığımız sayfalar.', photoNote: 'Bir hayalinizi temsil eden görsel eklenecek', sample: true,
   },
   {
     id: 'dawn', index: 6, title: 'İyi ki biz', short: 'İyi ki biz',
     summary: 'Bütün bu ışıkların sonunda, Yağmur’a söylemek istediğin en kişisel birkaç cümle burada olacak.',
     text: 'Bu son anı Hazret’in Yağmur’a yazacağı kendi sözlerine ayrıldı. Gerçek metin henüz eklenmedi. Altı yıldız keşfedildiğinde takımyıldız ve mektup açılacak.',
-    script: 'Aynı gökyüzü.<br>İyi ki biz.', photoNote: 'Sizin için özel bir fotoğraf buraya gelecek',
+    script: 'Aynı gökyüzü.<br>İyi ki biz.', photoNote: 'Sizin için özel bir fotoğraf buraya gelecek', sample: true,
   },
 ];
 

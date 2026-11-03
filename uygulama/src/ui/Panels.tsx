@@ -1,4 +1,5 @@
 import { forwardRef } from 'react';
+import { hasSampleContent } from '../content/letter';
 import { isComplete, memories, nextUnvisited, type Memory, type StarId } from '../content/memories';
 
 export function Intro({ onBegin }: { onBegin: () => void }) {
@@ -89,7 +90,7 @@ export const ArrivalPanel = forwardRef<HTMLHeadingElement, ArrivalPanelProps>(fu
           </button>
         </div>
       )}
-      <span className="sample-note">Örnek anı · Gerçek hikâyenizle değiştirilecek</span>
+      {memory.sample && <span className="sample-note">Örnek anı · Gerçek hikâyenizle değiştirilecek</span>}
     </section>
   );
 });
@@ -168,7 +169,7 @@ export function Footer({ hint }: { hint: string }) {
         </span>
       </div>
       <p className="gesture-hint">{hint}</p>
-      <span className="preview-label">TASARIM ÖNİZLEMESİ · ÖRNEK ANILAR</span>
+      {hasSampleContent && <span className="preview-label">TASARIM ÖNİZLEMESİ · ÖRNEK ANILAR</span>}
     </footer>
   );
 }

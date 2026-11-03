@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { letter } from '../content/letter';
 import { memories, type Memory, type StarId } from '../content/memories';
+import { MemoryPhoto } from './MemoryPhoto';
 
 interface ModalProps {
   open: boolean;
@@ -177,24 +178,23 @@ export function MemoryDialog({ memory, open, onClose, onNext, nextLabel, star, o
     >
       {memory && (
         <>
-          <div className={`memory-art memory-art--${memory.id}`}>
+          <div className={`memory-art memory-art--${memory.id}${memory.photo ? ' has-photo' : ''}`}>
+            <MemoryPhoto memory={memory} className="memory-photo" />
             <div className="art-glow" aria-hidden="true" />
             <span className="art-script" dangerouslySetInnerHTML={{ __html: memory.script }} />
-            <div className="photo-placeholder">
-              <span aria-hidden="true">✧</span>
-              Fotoğraf alanı · {memory.photoNote}
-            </div>
           </div>
           <div className="memory-content">
-            <div className="eyebrow">YILDIZ 0{memory.index} · ÖRNEK ANI</div>
+            <div className="eyebrow">YILDIZ 0{memory.index}{memory.sample ? ' · ÖRNEK ANI' : ''}</div>
             <h2 id="memory-title">{memory.title}</h2>
             <div className="mini-rule" aria-hidden="true" />
-            <p className="memory-text">{memory.text}</p>
-            <p className="example-note">
-              Bu anı ve metin, tasarımı göstermek için örnektir.
-              <br />
-              Gerçek hikâyenizle değiştirilecek.
-            </p>
+            {memory.text.split('\n\n').map((p) => <p className="memory-text" key={p}>{p}</p>)}
+            {memory.sample && (
+              <p className="example-note">
+                Bu anı ve metin, tasarımı göstermek için örnektir.
+                <br />
+                Gerçek hikâyenizle değiştirilecek.
+              </p>
+            )}
             <div className="memory-actions">
               <button className="text-button" type="button" onClick={onNext}>
                 {nextLabel} <span aria-hidden="true">↗</span>
@@ -252,7 +252,7 @@ export function LetterDialog({ open, onClose, returnFocus }: { open: boolean; on
     <h2 id="letter-title">{letter.greeting}</h2>
     {letter.paragraphs.map((p) => <p className="letter-paragraph" key={p}>{p}</p>)}
     <p className="letter-signature">{letter.signature}</p>
-    <p className="letter-note">{letter.note}</p>
+    {letter.sample && <p className="letter-note">{letter.note}</p>}
     <button className="text-button" type="button" onClick={onClose}>Gökyüzümüze dön <span aria-hidden="true">↖</span></button>
   </Modal>;
 }

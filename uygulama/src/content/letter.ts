@@ -1,3 +1,5 @@
+import { memories } from './memories';
+
 /** Kişisel mektup gelene kadar açıkça örnek olarak sunulur. */
 export const letter = {
   greeting: 'Sevgili Yağmur,',
@@ -7,5 +9,10 @@ export const letter = {
     'İyi ki yollarımız kesişti. İyi ki biz.',
   ],
   signature: 'Hazret',
+  /** Kişisel mektup gelince false: örnek notu gizlenir. */
+  sample: true,
   note: 'Örnek mektup · Hazret’in kişisel mektubuyla değiştirilecek.',
 };
+
+/** Herhangi bir içerik hâlâ örnekse önizleme etiketi görünür kalır. */
+export const hasSampleContent = letter.sample || memories.some((m) => m.sample);

@@ -1,4 +1,5 @@
 import { isComplete, memories, type StarId } from '../content/memories';
+import { MemoryPhoto } from './MemoryPhoto';
 
 interface FallbackProps {
   message: string;
@@ -30,10 +31,10 @@ export function Fallback({ message, onRetry, visited, onDiscover, onLetter }: Fa
         {memories.map((m) => (
           <li key={m.id}>
             <article>
-              <div className="eyebrow">YILDIZ 0{m.index} · ÖRNEK ANI</div>
+              <div className="eyebrow">YILDIZ 0{m.index}{m.sample ? ' · ÖRNEK ANI' : ''}</div>
               <h3>{m.title}</h3>
-              <p>{m.text}</p>
-              <p className="photo-note">Fotoğraf alanı · {m.photoNote}</p>
+              {m.text.split('\n\n').map((p) => <p key={p}>{p}</p>)}
+              {m.photo ? <MemoryPhoto memory={m} className="fallback-photo" /> : <p className="photo-note">Fotoğraf alanı · {m.photoNote}</p>}
               <button className="text-button" type="button" disabled={visited.includes(m.id)} onClick={() => onDiscover(m.id)} aria-label={`${m.title}: ${visited.includes(m.id) ? 'keşfedildi' : 'anıyı keşfet'}`}>
                 {visited.includes(m.id) ? 'Keşfedildi ✧' : 'Bu anıyı keşfet ↗'}
               </button>

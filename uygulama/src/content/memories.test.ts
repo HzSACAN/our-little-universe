@@ -16,6 +16,15 @@ describe('altı yıldızlı hikâye', () => {
     expect(isComplete(['dawn', 'dawn', 'violet', 'gold', 'azure', 'binary'])).toBe(false);
     expect(isComplete(['binary', 'rose', 'azure', 'violet', 'gold', 'dawn'])).toBe(true);
   });
+  it('her fotoğrafın dosyası ve alternatif metni vardır; boyutu fotograf.mjs sınırındadır', () => {
+    const files = Object.keys(import.meta.glob('../../public/anilar/*')).map((f) => f.replace('../../public/', ''));
+    for (const { id, photo } of memories) {
+      if (!photo) continue;
+      expect(files, id).toContain(photo.src);
+      expect(photo.alt.trim().length, `${id} alt metni`).toBeGreaterThan(10);
+      expect(Math.max(photo.width, photo.height), id).toBeLessThanOrEqual(1600);
+    }
+  });
   it('sıradaki keşfedilmemiş durağa döner ve gerektiğinde başa sarar', () => {
     expect(nextUnvisited(null, [])).toBe('gold');
     expect(nextUnvisited('gold', ['gold', 'binary', 'rose'])).toBe('azure');
