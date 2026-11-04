@@ -39,9 +39,10 @@ export const memories: Memory[] = [
   },
   {
     id: 'binary', index: 2, title: 'İkimizin ışığı', short: 'Yan yana',
-    summary: 'Birbirinin etrafında dönen iki yıldız. Bu ışık, yan yana olduğunuzda tamamlanan bir anı için ayrıldı.',
-    text: 'Bu yıldızda birlikte geçirdiğiniz, sizin için kıymetli bir günden kısa bir not olacak. Metin ve fotoğraf, Hazret’in kendi anısıyla değiştirilecek.',
-    script: 'Aynı yörünge.<br>İki ışık.', photoNote: 'İkinize ait fotoğraf buraya gelecek', sample: true,
+    summary: 'Birbirinin etrafında dönen iki yıldız. İlk kez birlikte denize gittiğimiz o yaz günü, yan yana olmanın ışığı burada saklı.',
+    text: 'İlk kez birlikte denize yüzmeye gittiğimiz gündü. Gökyüzü masmaviydi, saçlarım tuzdan darmadağın… Sen başını omzuma yasladın ve o an hiçbir yere yetişmem gerekmiyormuş gibi geldi.\n\nO gün anladım ki seninle yan yana olmak benim en huzurlu hâlim. Aynı yörüngede dönen iki yıldız gibiyiz; biri olmadan öteki hep eksik. İyi ki o gün oradaydık, birtanem.',
+    script: 'Aynı yörünge.<br>İki ışık.', photoNote: 'İkinize ait fotoğraf buraya gelecek', sample: false,
+    photo: { src: 'anilar/binary.jpg', width: 1200, height: 2134, alt: 'Hazret ve Yağmur masmavi gökyüzünün altında yan yana; Yağmur başını Hazret’in omzuna yaslamış, gülümsüyor.', focus: '52% 66%', focusMobile: '52% 50%' },
   },
   {
     id: 'rose', index: 3, title: 'Bir kahkaha kadar yakın', short: 'Bir kahkaha',
