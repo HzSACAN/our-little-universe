@@ -47,7 +47,7 @@ export const memories: Memory[] = [
   {
     id: 'rose', index: 3, title: 'Bir kahkaha kadar yakın', short: 'Bir kahkaha',
     summary: 'Pembe bir ışık, pespembe bir kafe. Saklamaya çalıştığın ama saklayamadığın o güzel gülüş burada.',
-    text: 'Hani beni o pespembe kafeye götürmek istemiştin ya… Utandım, gelemedim. Ama bu fotoğrafı her gördüğümde “iyi ki” demeden duramıyorum.\n\nBak, yine gülüşünü saklamaya çalışıyorsun. Hiç saklama güzellik; o gülüş benim en sevdiğim şey. Bir dahakine kafe istediği kadar pembe olsun, ben de geliyorum.',
+    text: 'Hani beni o pespembe kafeye götürmek istemiştin ya… Utandım, gelemedim. Ama bu fotoğrafı her gördüğümde “iyi ki” demeden duramıyorum.\n\nBak, yine gülüşünü saklamaya çalışıyorsun. Hiç saklama güzellik; o gülüş benim en sevdiğim şey. Bir dahakine kafe istediği kadar pembe olsun, birlikte orada olacağız.',
     script: 'Saklamaya çalıştığın<br>o gülüş.', photoNote: 'Birlikte güldüğünüz bir fotoğraf eklenecek', sample: false,
     photo: { src: 'anilar/rose.jpg', width: 1200, height: 1600, alt: 'Yağmur pembe neon ışıklı bir kafede, gülüşünü eliyle saklamaya çalışırken yana bakıyor; arkasında “All you need is love” yazan bir tabela var.', focus: '42% 72%', focusMobile: '42% 70%' },
   },
