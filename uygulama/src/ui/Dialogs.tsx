@@ -212,40 +212,48 @@ export function MemoryDialog({ memory, open, onClose, onNext, nextLabel, star, o
               <path d={HEART} />
             </clipPath>
           </svg>
-          <div className="heart-face heart-front" inert={turned && !flat}>
-            <div className={`memory-art memory-art--${memory.id}`}>
-              <MemoryPhoto memory={memory} className="memory-photo" />
-              <div className="art-glow" aria-hidden="true" />
-              <span className="art-script" dangerouslySetInnerHTML={{ __html: memory.script }} />
-            </div>
-            <button ref={readRef} className="text-button heart-turn" type="button" onClick={() => turn(true)}>
-              Anıyı oku <span aria-hidden="true">↻</span>
-            </button>
-          </div>
-          <div className="heart-face heart-back" inert={!turned && !flat}>
-            <i className="heart-flow heart-flow--left" aria-hidden="true" />
-            <i className="heart-flow heart-flow--right" aria-hidden="true" />
-            <div className="memory-content">
-              <div className="eyebrow">
-                YILDIZ 0{memory.index} / 0{memories.length}
-                {memory.sample ? ' · ÖRNEK ANI' : ''}
-              </div>
-              <h2 id="memory-title" ref={titleRef} tabIndex={-1}>
-                {memory.title}
-              </h2>
-              <div className="mini-rule" aria-hidden="true" />
-              {memory.text.split('\n\n').map((p) => <p className="memory-text" key={p}>{p}</p>)}
-              {memory.sample && (
-                <p className="example-note">
-                  Bu anı ve metin, tasarımı göstermek için örnektir.
-                  <br />
-                  Gerçek hikâyenizle değiştirilecek.
-                </p>
-              )}
-              <div className="memory-actions">
-                <button className="text-button" type="button" onClick={onNext}>
-                  {nextLabel} <span aria-hidden="true">↗</span>
+          <div className="heart-side heart-side--front">
+            <div className="heart-glow">
+              <div className="heart-face heart-front" inert={turned && !flat}>
+                <div className={`memory-art memory-art--${memory.id}`}>
+                  <MemoryPhoto memory={memory} className="memory-photo" />
+                  <div className="art-glow" aria-hidden="true" />
+                  <span className="art-script" dangerouslySetInnerHTML={{ __html: memory.script }} />
+                </div>
+                <button ref={readRef} className="text-button heart-turn" type="button" onClick={() => turn(true)}>
+                  Anıyı oku <span aria-hidden="true">↻</span>
                 </button>
+              </div>
+            </div>
+          </div>
+          <div className="heart-side heart-side--back">
+            <div className="heart-glow">
+              <div className="heart-face heart-back" inert={!turned && !flat}>
+                <i className="heart-flow heart-flow--left" aria-hidden="true" />
+                <i className="heart-flow heart-flow--right" aria-hidden="true" />
+                <div className="memory-content">
+                  <div className="eyebrow">
+                    YILDIZ 0{memory.index} / 0{memories.length}
+                    {memory.sample ? ' · ÖRNEK ANI' : ''}
+                  </div>
+                  <h2 id="memory-title" ref={titleRef} tabIndex={-1}>
+                    {memory.title}
+                  </h2>
+                  <div className="mini-rule" aria-hidden="true" />
+                  {memory.text.split('\n\n').map((p) => <p className="memory-text" key={p}>{p}</p>)}
+                  {memory.sample && (
+                    <p className="example-note">
+                      Bu anı ve metin, tasarımı göstermek için örnektir.
+                      <br />
+                      Gerçek hikâyenizle değiştirilecek.
+                    </p>
+                  )}
+                  <div className="memory-actions">
+                    <button className="text-button" type="button" onClick={onNext}>
+                      {nextLabel} <span aria-hidden="true">↗</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -694,8 +694,6 @@ dialog[open] {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  filter: drop-shadow(0 0 1.5px rgba(255, 228, 186, 0.85)) drop-shadow(0 0 30px var(--heart-glow))
-    drop-shadow(0 30px 50px rgba(0, 0, 0, 0.45));
 }
 .heart--binary { --heart-glow: rgba(150, 180, 255, 0.4); }
 .heart--rose { --heart-glow: rgba(226, 110, 170, 0.42); }
@@ -705,26 +703,44 @@ dialog[open] {
 .heart-defs {
   position: absolute;
 }
+/* Her yüz kendi katmanında (heart-side) döner. Parıltı (drop-shadow) bu katmanın içindeki
+   heart-glow'da olduğu için katmanla birlikte bir kez çizilir; dönüş yalnız hazır katmanı daraltır.
+   Filtre dönen elemanın kendisinde ya da ortak kapsayıcıda olsaydı her karede yeniden hesaplanırdı. */
+.heart-side,
+.heart-glow {
+  position: absolute;
+  inset: 0;
+}
+.heart-side {
+  will-change: transform;
+  transition: transform 0.3s, visibility 0s;
+}
+.heart-glow {
+  filter: drop-shadow(0 0 1.5px rgba(255, 228, 186, 0.85)) drop-shadow(0 0 30px var(--heart-glow))
+    drop-shadow(0 30px 50px rgba(0, 0, 0, 0.45));
+}
 .heart-face {
   position: absolute;
   inset: 0;
   clip-path: var(--heart-clip);
   pointer-events: auto;
-  transition: transform 0.3s cubic-bezier(0.45, 0, 0.55, 1), visibility 0s;
 }
-/* Dönüş: görünen yüz ortasına doğru incelir, sonra öbür yüz açılır. */
-.heart-back,
-.heart.is-turned .heart-front {
+/* Dönüş, sabit hızla dönen bir kart gibidir (genişlik = cos açı): yüz incelirken hızlanır,
+   tam kenardan geçerken en hızlıdır, öbür yüz açılırken yavaşlar. Ortada duraklama olmaz. */
+.heart-side--back,
+.heart.is-turned .heart-side--front {
   transform: scaleX(0);
   visibility: hidden;
   transition-delay: 0s, 0.3s;
+  transition-timing-function: cubic-bezier(0.12, 0, 0.39, 0), linear;
 }
 /* Açılacak yüz hemen görünür (ama hâlâ ince) olur: odak dönüş sürerken ona geçebilir. */
-.heart-front,
-.heart.is-turned .heart-back {
+.heart-side--front,
+.heart.is-turned .heart-side--back {
   transform: none;
   visibility: visible;
   transition-delay: 0.3s, 0s;
+  transition-timing-function: cubic-bezier(0.61, 1, 0.88, 1), linear;
 }
 
 /* Ön yüz */
@@ -1215,8 +1231,9 @@ dialog[open] {
     overflow: auto;
   }
   .memory-dialog .close { top: 14px; right: 14px; }
-  .memory-dialog .heart { height: auto; filter: none; pointer-events: auto; }
-  .memory-dialog .heart .heart-face { position: relative; clip-path: none; transform: none; visibility: visible; transition: none; }
+  .memory-dialog .heart { height: auto; pointer-events: auto; }
+  .memory-dialog .heart :is(.heart-side, .heart-glow) { display: contents; visibility: visible; }
+  .memory-dialog .heart .heart-face { position: relative; clip-path: none; }
   .memory-dialog .heart .heart-front { height: clamp(240px, 44dvh, 400px); }
   .heart-turn, .heart-turn-back, .heart-flow { display: none; }
   .heart-back { overflow: visible; background: none; }
