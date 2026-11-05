@@ -46,9 +46,10 @@ export const memories: Memory[] = [
   },
   {
     id: 'rose', index: 3, title: 'Bir kahkaha kadar yakın', short: 'Bir kahkaha',
-    summary: 'Pembe bir ışığın içinde, hatırladığınızda yeniden gülümsediğiniz bir an için küçük bir yer.',
-    text: 'Yalnızca sizin anladığınız bir şaka, birlikte güldüğünüz bir an ya da yüzünüzde kalan bir gülümseme. Bu örnek metnin yerine size ait o hikâye gelecek.',
-    script: 'Bir gülüş.<br>Kocaman bir an.', photoNote: 'Birlikte güldüğünüz bir fotoğraf eklenecek', sample: true,
+    summary: 'Pembe bir ışık, pespembe bir kafe. Saklamaya çalıştığın ama saklayamadığın o güzel gülüş burada.',
+    text: 'Beni pespembe bir kafeye götürmek istemiştin. Ben utandım, gelemedim… Sen de vazgeçmedin, arkadaşımızla gittin. Sonra bu fotoğrafı gördüm.\n\nGülüşünü elinle saklamaya çalışıyorsun ama boşuna; gözlerin her şeyi ele veriyor. Arkandaki tabelada “All you need is love” yazıyor. Ben o gün orada değildim, ama bu gülüşe her baktığımda sana bir kahkaha kadar yakınım. Bir dahaki sefere utanmak yok, söz; o pembe kafeye birlikte gideceğiz, güzellik.',
+    script: 'Saklamaya çalıştığın<br>o gülüş.', photoNote: 'Birlikte güldüğünüz bir fotoğraf eklenecek', sample: false,
+    photo: { src: 'anilar/rose.jpg', width: 1200, height: 1600, alt: 'Yağmur pembe neon ışıklı bir kafede, gülüşünü eliyle saklamaya çalışırken yana bakıyor; arkasında “All you need is love” yazan bir tabela var.', focus: '42% 72%', focusMobile: '42% 70%' },
   },
   {
     id: 'azure', index: 4, title: 'Küçük mutluluklarımız', short: 'Küçük şeyler',
