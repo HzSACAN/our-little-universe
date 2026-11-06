@@ -1,0 +1,54 @@
+# main'e her push'ta siteyi derleyip GitHub Pages'e yayınlar:
+# https://hzsacan.github.io/our-little-universe/
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  derle:
+    name: Derle
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: uygulama
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: uygulama/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      # Proje sayfası alt yolda yayınlanır; fontlar, dokular ve fotoğraflar BASE_URL ile bu yolu alır.
+      - run: pnpm exec vite build --base="/${{ github.event.repository.name }}/"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: uygulama/dist
+
+  yayinla:
+    name: Yayınla
+    needs: derle
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

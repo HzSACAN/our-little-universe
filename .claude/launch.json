@@ -12,6 +12,12 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--dir", "uygulama", "preview", "--port", "4173", "--strictPort"],
       "port": 4173
+    },
+    {
+      "name": "uygulama-pages",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "uygulama", "exec", "vite", "preview", "--base=/our-little-universe/", "--port", "4174", "--strictPort"],
+      "port": 4174
     }
   ]
 }
