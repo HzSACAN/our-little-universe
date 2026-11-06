@@ -69,9 +69,10 @@ export const memories: Memory[] = [
   },
   {
     id: 'dawn', index: 6, title: 'İyi ki biz', short: 'İyi ki biz',
-    summary: 'Bütün bu ışıkların sonunda, Yağmur’a söylemek istediğin en kişisel birkaç cümle burada olacak.',
-    text: 'Bu son anı Hazret’in Yağmur’a yazacağı kendi sözlerine ayrıldı. Gerçek metin henüz eklenmedi. Altı yıldız keşfedildiğinde takımyıldız ve mektup açılacak.',
-    script: 'Aynı gökyüzü.<br>İyi ki biz.', photoNote: 'Sizin için özel bir fotoğraf buraya gelecek', sample: true,
+    summary: 'Bütün bu ışıkların sonunda tek bir şükür: seninle “biz” olmak.',
+    text: 'Hayatın bana getirdiği en güzel şeylerden biri, seninle “biz” olmak. Birlikte güldüğümüz her an, en sıradan günü bile saklamak istediğim bir hatıraya dönüştürüyor.\n\nİyi ki yollarımız kesişmiş, Omorfiam. İyi ki biz.',
+    script: 'Aynı gökyüzü.<br>İyi ki biz.', photoNote: 'Sizin için özel bir fotoğraf buraya gelecek', sample: false,
+    photo: { src: 'anilar/dawn.jpg', width: 1597, height: 1200, alt: 'Siyah beyaz bir fotoğraf: bir kafede yan yana oturan Yağmur gülümseyerek Hazret’e bakıyor; Hazret gözlerini indirmiş, hafifçe gülümsüyor.', focus: '55% 50%', scriptAt: 'top' },
   },
 ];
 
