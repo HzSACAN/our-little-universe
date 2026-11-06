@@ -1,16 +1,17 @@
 import { memories } from './memories';
 
-/** Kişisel mektup gelene kadar açıkça örnek olarak sunulur. */
+/** Altı yıldız keşfedilince açılan kişisel mektup. */
 export const letter = {
-  greeting: 'Sevgili Yağmur,',
+  greeting: 'Canımın içi,',
   paragraphs: [
-    'Bu küçük evrenin her yıldızına bizden bir şey bırakmak istedim. Bir fotoğraf, bir cümle, dönüp dönüp hatırlamak istediğim bir an…',
-    'Gökyüzü ne kadar büyük olursa olsun, benim en sevdiğim yer hep senin yanın.',
-    'İyi ki yollarımız kesişti. İyi ki biz.',
+    'Bu küçük evrendeki her yıldız bizden bir an taşıyor. Ama hepsini bir arada tutan, bu gökyüzünün tam ortasındaki sensin.',
+    'Ne zaman karamsarlığa düşsem, umudumu yitirsem, beni o karanlıktan çekip alan hep sen oldun. Zor zamanlarımda yanımda durdun, bana yeniden umut verdin. Bilir misin, ne kadar güçlü, ne kadar güzel, ne kadar düşüncelisin?',
+    'Sana sahip olduğum için çok şanslıyım. Hayatımızın geri kalanında da hep birlikte olalım, hep mutlu olalım istiyorum.',
+    'Ve sana bir söz: hayatım boyunca en büyük çabam senin mutluluğun için olacak.',
   ],
   signature: 'Hazret',
   /** Kişisel mektup gelince false: örnek notu gizlenir. */
-  sample: true,
+  sample: false,
   note: 'Örnek mektup · Hazret’in kişisel mektubuyla değiştirilecek.',
 };
 
