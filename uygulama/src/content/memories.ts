@@ -62,9 +62,10 @@ export const memories: Memory[] = [
   },
   {
     id: 'violet', index: 5, title: 'Daha nice yollar', short: 'Yeni yollar',
-    summary: 'Mor ışıkların ardında, henüz gitmediğiniz yerlere ve birlikte kurduğunuz hayallere açılan bir yıldız.',
-    text: 'Birlikte gerçekleştirmek istediğiniz bir hayal ya da gitmek istediğiniz bir yer için ayrılmış örnek alan. Buraya sizin kelimeleriniz gelecek.',
-    script: 'Henüz<br>yazmadığımız sayfalar.', photoNote: 'Bir hayalinizi temsil eden görsel eklenecek', sample: true,
+    summary: 'Mor ışıkların ardında el ele yürüdüğümüz bir yol; ilerisinde sıcak bir yuva ve birlikte keşfedeceğimiz ufuklar.',
+    text: 'Bu yolu senin için çizdim: el ele yürüdüğümüz bir yol, ilerisinde sıcacık bir yuva ve birlikte keşfedeceğimiz ufuklar.\n\nNereye gideceğimizi henüz bilmiyorum; bildiğim, seninle daha nice yollar yürümek istediğim.',
+    script: 'El ele,<br>daha nice yollara.', photoNote: 'Bir hayalinizi temsil eden görsel eklenecek', sample: false,
+    photo: { src: 'anilar/violet.jpg', width: 1200, height: 1200, alt: 'Hazret’in hazırladığı bir görsel: gün batımında gelinlikli ve takım elbiseli bir çift çiçekli taş bir yolda el ele yürüyor; yolun ilerisinde ışıkları yanan bir taş ev, denize ve karlı dağlara açılan ufuklar.', focus: '50% 50%', scriptAt: 'top' },
   },
   {
     id: 'dawn', index: 6, title: 'İyi ki biz', short: 'İyi ki biz',
