@@ -9,7 +9,7 @@ export const letter = {
     'Sana sahip olduğum için çok şanslıyım. Hayatımızın geri kalanında da hep birlikte olalım, hep mutlu olalım istiyorum.',
     'Ve sana bir söz: hayatım boyunca en büyük çabam senin mutluluğun için olacak.',
   ],
-  signature: 'Hazret',
+  signature: 'HzSACAN',
   /** Kişisel mektup gelince false: örnek notu gizlenir. */
   sample: false,
   note: 'Örnek mektup · Hazret’in kişisel mektubuyla değiştirilecek.',
