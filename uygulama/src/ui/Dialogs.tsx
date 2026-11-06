@@ -215,7 +215,7 @@ export function MemoryDialog({ memory, open, onClose, onNext, nextLabel, star, o
           <div className="heart-side heart-side--front">
             <div className="heart-glow">
               <div className="heart-face heart-front" inert={turned && !flat}>
-                <div className={`memory-art memory-art--${memory.id}`}>
+                <div className={`memory-art memory-art--${memory.id}`} data-script={memory.photo?.scriptAt}>
                   <MemoryPhoto memory={memory} className="memory-photo" />
                   <div className="art-glow" aria-hidden="true" />
                   <span className="art-script" dangerouslySetInnerHTML={{ __html: memory.script }} />

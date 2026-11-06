@@ -12,6 +12,8 @@ export interface MemoryPhoto {
   focus?: string;
   /** Telefondaki uzun kalp kadrajı; verilmezse `focus`. */
   focusMobile?: string;
+  /** Masaüstü kalpte kısa cümlenin yeri; yüzler kalbin alt yarısındaysa 'top'. Varsayılan alt. */
+  scriptAt?: 'top';
 }
 
 export interface Memory {
@@ -53,9 +55,10 @@ export const memories: Memory[] = [
   },
   {
     id: 'azure', index: 4, title: 'Küçük mutluluklarımız', short: 'Küçük şeyler',
-    summary: 'Turkuaz bir yıldız. Sıradan bir günü sizin için özel yapan o küçük ayrıntılara ayrıldı.',
-    text: 'Birlikte sevdiğiniz bir alışkanlık, bir şarkı veya paylaştığınız küçük bir ritüel burada anlatılabilir. Gerçek ayrıntılar henüz eklenmedi.',
-    script: 'Küçük şeyler.<br>Bizden izler.', photoNote: 'Gündelik bir anınıza ait fotoğraf eklenecek', sample: true,
+    summary: 'Turkuaz bir yıldız. Pierre Loti’de soğuk bir bahar günü ve yanımda olmanın sıcaklığı burada saklı.',
+    text: 'Hatırlıyor musun, Pierre Loti’ye çıktığımız o gün hava ne kadar soğuktu? Bahardı ama hiç belli etmiyordu.\n\nYine de ben o gün hiç üşümedim. Yanımdaydın ya… İçimi ısıtan hep sendin, birtanem.',
+    script: 'Soğuk bir bahar günü.<br>Sıcacık bir sen.', photoNote: 'Gündelik bir anınıza ait fotoğraf eklenecek', sample: false,
+    photo: { src: 'anilar/azure.jpg', width: 1600, height: 1200, alt: 'Pierre Loti tabelasının altında, güneşli ama soğuk bir bahar günü; kalın montlu Hazret gülümseyen Yağmur’u yanağından öpüyor.', focus: '48% 50%', scriptAt: 'top' },
   },
   {
     id: 'violet', index: 5, title: 'Daha nice yollar', short: 'Yeni yollar',

@@ -785,6 +785,12 @@ dialog[open] {
   text-align: center;
   text-shadow: 0 2px 18px rgba(4, 6, 22, 0.85);
 }
+/* Yüzler alttaysa (yatay fotoğraf) cümle kalbin üstüne çıkar; alttaki koyuluk yalnız düğmeyi taşır. */
+.memory-art[data-script='top'] .art-glow {
+  background: linear-gradient(to bottom, rgba(4, 6, 22, 0.7) 10%, rgba(4, 6, 22, 0.3) 32%, transparent 46%),
+    linear-gradient(to top, rgba(4, 6, 22, 0.94) 10%, rgba(4, 6, 22, 0.62) 22%, transparent 36%);
+}
+.memory-art[data-script='top'] .art-script { top: 22%; bottom: auto; }
 .photo-placeholder {
   position: absolute;
   left: 22%;
@@ -1238,8 +1244,8 @@ dialog[open] {
   .heart-turn, .heart-turn-back, .heart-flow { display: none; }
   .heart-back { overflow: visible; background: none; }
   .memory-photo { object-position: var(--focus-m); }
-  .art-glow { background: linear-gradient(to top, rgba(4, 6, 22, 0.92), rgba(4, 6, 22, 0.35) 38%, transparent 62%); }
-  .art-script { left: 10%; right: 10%; bottom: 18px; font-size: 30px; text-align: left; }
+  .art-glow, .memory-art[data-script] .art-glow { background: linear-gradient(to top, rgba(4, 6, 22, 0.92), rgba(4, 6, 22, 0.35) 38%, transparent 62%); }
+  .art-script, .memory-art[data-script] .art-script { top: auto; left: 10%; right: 10%; bottom: 18px; font-size: 30px; text-align: left; }
   .photo-placeholder { top: auto; bottom: 16px; left: 8%; right: 8%; font-size: 10px; }
   .memory-content { max-width: none; padding: 26px 22px 24px; text-align: left; }
   .memory-content h2 { font-size: 34px; margin: 14px 0; }
